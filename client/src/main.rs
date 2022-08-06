@@ -1,17 +1,6 @@
-use structopt::StructOpt;
+use args::parse_args;
 
-#[derive(StructOpt)]
-enum Command {
-    Chat {},
-}
-
-fn parse_args() {
-    match Command::from_args() {
-        Command::Chat {} => {
-            println!("Chat!");
-        }
-    }
-}
+pub mod args;
 
 fn main() {
     parse_args();
