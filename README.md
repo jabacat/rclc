@@ -1,2 +1,2 @@
 # rclc
-C command line chat
+Rust command line chat
