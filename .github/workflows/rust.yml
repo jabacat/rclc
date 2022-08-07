@@ -24,6 +24,9 @@ jobs:
         
         cd ./client
         cargo build --verbose
+
+        cd ./server
+        cargo build --verbose
         
     - name: Run tests
       run: |
@@ -33,3 +36,6 @@ jobs:
         
         cd ./client
         cargo test --verbose
+
+        cd ./server
+        cargo build --verbose
