@@ -1,3 +1,7 @@
+use args::parse_args;
+
+pub mod args;
+
 fn main() {
-    println!("Hello, world!");
+    parse_args();
 }
