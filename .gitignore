@@ -1,2 +1,2 @@
-server/target/
-server/Cargo.lock
+daemon/target/
+daemon/Cargo.lock
