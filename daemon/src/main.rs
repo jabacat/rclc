@@ -6,7 +6,7 @@ fn main() {
 
     Notification::new()
     .summary("RCLC")
-    .body("The RCLC server has been launched!")
+    .body("The RCLC daemon has been launched!")
     .show();
 
 }
