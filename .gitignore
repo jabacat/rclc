@@ -1,2 +1,3 @@
+target/
 daemon/target/
 daemon/Cargo.lock
