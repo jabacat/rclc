@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  daemon:
 
     runs-on: ubuntu-latest
 
@@ -20,24 +20,40 @@ jobs:
       run: |
         cd ./daemon
         cargo build --verbose
-        cd ..
         
-        cd ./client
-        cargo build --verbose
-        cd ..
-
-        cd ./server
-        cargo build --verbose
-        
-    - name: Run tests
+    - name: Test
       run: |
         cd ./daemon
         cargo test --verbose
-        cd ..
-        
-        cd ./client
-        cargo test --verbose
-        cd ..
 
+  server:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: |
         cd ./server
         cargo build --verbose
+        
+    - name: Test
+      run: |
+        cd ./server
+        cargo test --verbose
+
+  client:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: |
+        cd ./client
+        cargo build --verbose
+        
+    - name: Test
+      run: |
+        cd ./client
+        cargo test --verbose
