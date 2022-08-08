@@ -1,1 +1,6 @@
+<<<<<<< HEAD
 target/
+=======
+daemon/target/
+daemon/Cargo.lock
+>>>>>>> c60bc7465cb6118e33b9473dd1a148ee4b2badfb
