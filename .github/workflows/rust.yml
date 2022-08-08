@@ -25,6 +25,11 @@ jobs:
       run: |
         cd ./daemon
         cargo test --verbose
+        
+    - name: Format
+      run: |
+        cd ./daemon
+        cargo fmt --check
 
   server:
 
@@ -41,6 +46,11 @@ jobs:
       run: |
         cd ./server
         cargo test --verbose
+        
+    - name: Format
+      run: |
+        cd ./server
+        cargo fmt --check
 
   client:
 
@@ -57,3 +67,8 @@ jobs:
       run: |
         cd ./client
         cargo test --verbose
+        
+    - name: Format
+      run: |
+        cd ./client
+        cargo fmt --check
