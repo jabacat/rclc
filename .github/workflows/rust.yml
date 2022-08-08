@@ -16,7 +16,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Buildtest
+    - name: Build
       run: |
         cd ./daemon
         cargo build --verbose
