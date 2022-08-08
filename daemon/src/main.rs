@@ -1,10 +1,8 @@
-use notify_rust::Notification;
+pub mod notif;
 
 fn main() {
     println!("Hello, world!");
 
-    Notification::new()
-        .summary("RCLC")
-        .body("The RCLC daemon has been launched!")
-        .show();
+    notif::notif("RCLC", "The RCLC daemon has been launched!");
+
 }
