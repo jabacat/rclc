@@ -24,6 +24,7 @@ jobs:
         
         cd ./client
         cargo build --verbose
+        cd ..
 
         cd ./server
         cargo build --verbose
@@ -36,6 +37,7 @@ jobs:
         
         cd ./client
         cargo test --verbose
+        cd ..
 
         cd ./server
         cargo build --verbose
