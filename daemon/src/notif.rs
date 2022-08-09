@@ -6,17 +6,10 @@ use notify_rust::Notification;
  * else at the moment.
  */
 pub fn notif(summary: &str, msg: &str) {
-    
-    match
-    Notification::new()
-        .summary(summary)
-        .body(msg)
-        .show() {
-        
+    match Notification::new().summary(summary).body(msg).show() {
         Ok(_) => (),
         // This should never happen. TODO: log this event which supposedly
         // never happens.
-        Err(_) => ()
-
+        Err(_) => (),
     }
 }
