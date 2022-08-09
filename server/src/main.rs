@@ -1,8 +1,8 @@
 #[macro_use]
 extern crate rocket;
 
-pub mod routes;
 pub mod discovery;
+pub mod routes;
 
 use routes::get_routes;
 

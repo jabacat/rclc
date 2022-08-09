@@ -1,6 +1,6 @@
 use crate::discovery::DiscoveryRequest;
-use std::net::SocketAddr;
 use rocket::form::Form;
+use std::net::SocketAddr;
 
 #[get("/")]
 fn home() -> String {
