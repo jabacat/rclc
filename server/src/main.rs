@@ -14,7 +14,7 @@ fn home() -> String {
 }
 
 // To setup a connection, a user will give their IP address and the username or userid of the
-// person they want to talk to. This data will be put into the ChatRequest and then will be 
+// person they want to talk to. This data will be put into the ChatRequest and then will be
 // added to a queue or vector if the userid of the other person is not in the collection already
 // if it is in the collection, then send the ip of the other person back as a response
 #[get("/setup-connection")]
