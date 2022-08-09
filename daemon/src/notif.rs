@@ -10,6 +10,6 @@ pub fn notif(summary: &str, msg: &str) {
         Ok(_) => (),
         // This should never happen. TODO: log this event which supposedly
         // never happens.
-        Err(_) => (),
+        Err(_) => eprintln!("Unable to display notification!"),
     }
 }
