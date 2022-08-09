@@ -8,11 +8,11 @@ fn home() -> String {
 }
 
 #[post("/discover", data = "<discoveryrequest>")]
-fn discover(remote_addr: SocketAddr, discoveryrequest: Form<DiscoveryRequest>) -> String {
-    println!("{:?}", discoveryrequest);
+fn discover(remote_addr: SocketAddr, mut discoveryrequest: Form<DiscoveryRequest>) -> String {
     if discoveryrequest.ip.is_none() {
-        return remote_addr.to_string();
+        discoveryrequest.ip = Some(remote_addr.ip());
     }
+    debug!("{:?}", discoveryrequest);
     "Looking for clients".to_string()
 }
 

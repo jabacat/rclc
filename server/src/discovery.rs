@@ -1,8 +1,8 @@
-use std::net::Ipv4Addr;
+use std::net::IpAddr;
 
 #[derive(FromForm, Debug)]
 pub struct DiscoveryRequest {
-    pub ip: Option<Ipv4Addr>,
+    pub ip: Option<IpAddr>,
     pub port: u16,
     pub requested_by: u32,
     pub looking_for: u32,
