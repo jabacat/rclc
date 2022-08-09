@@ -8,6 +8,7 @@ fn home() -> String {
 }
 
 #[post("/discover", data = "<discoveryrequest>")]
+// If the ip is not provided, use the ip of the client sending the request
 fn discover(remote_addr: SocketAddr, mut discoveryrequest: Form<DiscoveryRequest>) -> String {
     if discoveryrequest.ip.is_none() {
         discoveryrequest.ip = Some(remote_addr.ip());
