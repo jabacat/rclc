@@ -11,11 +11,11 @@ env:
 
 jobs:
   daemon:
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
+    - uses: Swatinem/rust-cache@v1
     - name: Build
       run: |
         cd ./daemon
@@ -32,11 +32,12 @@ jobs:
         cargo fmt --check
 
   server:
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
+    - uses: Swatinem/rust-cache@v1
+
     - name: Build
       run: |
         cd ./server
@@ -53,11 +54,11 @@ jobs:
         cargo fmt --check
 
   client:
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
+    - uses: Swatinem/rust-cache@v1
     - name: Build
       run: |
         cd ./client
