@@ -1,15 +1,16 @@
 [package]
-name = "client"
+name = "common"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-structopt = "0.3.26"
-anyhow = "1"
-rmp-serde = "1"
-chrono = "0.4"
 
-[dependencies.common]
-path = "../common"
+[dependencies.serde]
+version = "1"
+features = ["derive"]
+
+[dependencies.chrono]
+version = "0.4.21"
+features = ["serde"]
