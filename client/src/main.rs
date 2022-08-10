@@ -1,6 +1,7 @@
 use std::{
     fs::{self},
-    os::unix::prelude::FileTypeExt, path::{Path, PathBuf},
+    os::unix::prelude::FileTypeExt,
+    path::PathBuf,
 };
 
 use anyhow::{bail, Context, Result};
