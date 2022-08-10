@@ -1,6 +1,8 @@
 use std::net::IpAddr;
+use rocket::serde::Deserialize;
 
-#[derive(FromForm, Debug)]
+#[derive(FromForm, Debug, Deserialize)]
+#[serde(crate = "rocket::serde")]
 pub struct DiscoveryRequest {
     pub ip: Option<IpAddr>,
     pub port: u16,
