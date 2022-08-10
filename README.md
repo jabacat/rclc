@@ -1,5 +1,8 @@
-# rclc ![Rust](https://img.shields.io/github/workflow/status/jabacat/rclc/Rust?style=for-the-badge)
-Rust command line chat
+<div align="center">
 
-![rclc logo](https://user-images.githubusercontent.com/35516367/183268271-577cf699-1be1-48ec-adb7-f791c192dae4.png)
-Image made by our friend DALL-E 2
+  # Rust Command Line Chat (RCLC) ![Rust](https://img.shields.io/github/workflow/status/jabacat/rclc/Rust?style=for-the-badge)
+  <img src="https://user-images.githubusercontent.com/35516367/184011766-a3719966-b53f-4245-895e-8a89fa177651.png" width="478" height="320" />
+</div>
+
+## Structure
+![RCLC Structure with bg](https://user-images.githubusercontent.com/35516367/184010638-25389f58-7de6-4d69-bc0b-5467f6618ef8.png)
