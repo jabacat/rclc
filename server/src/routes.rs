@@ -23,8 +23,6 @@ fn discover(
         };
         discoveryrequest.ip = ip;
     }
-    debug!("{:?}", discoveryrequest);
-    println!("{:?}", discoveryqueue.queue.read().unwrap());
 
     // Place the users request in the queue
     let advert = Advertisement {
@@ -32,7 +30,20 @@ fn discover(
         created_at: SystemTime::now(),
         expires_in: 5000,
     };
-    discoveryqueue.queue.write().unwrap().insert(discoveryrequest.looking_for.clone(), advert);
+    println!("{:?}", &advert);
+    discoveryqueue.queue.write().unwrap().insert(discoveryrequest.requested_by.clone(), advert);
+
+
+    match discoveryqueue.queue.read().unwrap().get(&discoveryrequest.looking_for) {
+        Some(a) => {
+            if &discoveryrequest.requested_by == &a.discovery.looking_for {
+                println!("It's a match! {:?}", a);
+            }
+        },
+        None => {
+            println!("No advertisement found");
+        }
+    }
 
     "Looking for clients".to_string()
 }
