@@ -4,14 +4,14 @@ use serde::{Serialize, Deserialize};
 use std::net::IpAddr;
 
 /// a literal message sent from one peer
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct Message {
-    content: String,
-    time: DateTime<Utc>,
-    origin: IpAddr,
+    pub content: String,
+    pub time: DateTime<Utc>,
+    pub origin: IpAddr,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub enum ClientToDaemonMsg {
     Block(IpAddr),
     Send(String),
@@ -19,7 +19,7 @@ pub enum ClientToDaemonMsg {
     Disconnect,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub enum DaemonToClientMsg {
     Recieved(Message),
 }
