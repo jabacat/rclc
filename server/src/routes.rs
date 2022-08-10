@@ -9,11 +9,14 @@ fn home() -> String {
 
 #[post("/discover", format = "json", data = "<discoveryrequest>")]
 // If the ip is not provided, use the ip of the client sending the request
-fn discover(remote_addr: Option<SocketAddr>, mut discoveryrequest: Json<DiscoveryRequest>) -> String {
+fn discover(
+    remote_addr: Option<SocketAddr>,
+    mut discoveryrequest: Json<DiscoveryRequest>,
+) -> String {
     if discoveryrequest.ip.is_none() {
         let ip = match remote_addr {
             Some(addr) => Some(addr.ip()),
-            None => None
+            None => None,
         };
         discoveryrequest.ip = ip;
     }
@@ -28,8 +31,8 @@ pub fn get_routes() -> Vec<rocket::Route> {
 #[cfg(test)]
 mod test {
     use super::super::rocket;
-    use rocket::local::blocking::Client;
     use rocket::http::ContentType;
+    use rocket::local::blocking::Client;
 
     #[test]
     fn discover_test() {

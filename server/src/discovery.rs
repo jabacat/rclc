@@ -1,5 +1,5 @@
-use std::net::IpAddr;
 use rocket::serde::Deserialize;
+use std::net::IpAddr;
 
 #[derive(FromForm, Debug, Deserialize)]
 #[serde(crate = "rocket::serde")]
