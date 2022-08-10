@@ -1,7 +1,8 @@
-use crate::discovery::{DiscoveryRequest, DiscoveryQueue};
+use crate::discovery::{DiscoveryRequest, DiscoveryQueue, Advertisement};
 use rocket::serde::json::Json;
 use rocket::State;
 use std::net::SocketAddr;
+use std::time::SystemTime;
 
 #[get("/")]
 fn home() -> String {
@@ -23,8 +24,16 @@ fn discover(
         discoveryrequest.ip = ip;
     }
     debug!("{:?}", discoveryrequest);
-    println!("{:?}", discoveryqueue);
-    discoveryqueue.queue.write().unwrap().push(discoveryrequest.into_inner());
+    println!("{:?}", discoveryqueue.queue.read().unwrap());
+
+    // Place the users request in the queue
+    let advert = Advertisement {
+        discovery: discoveryrequest.clone().into_inner(),
+        created_at: SystemTime::now(),
+        expires_in: 5000,
+    };
+    discoveryqueue.queue.write().unwrap().insert(discoveryrequest.looking_for.clone(), advert);
+
     "Looking for clients".to_string()
 }
 
