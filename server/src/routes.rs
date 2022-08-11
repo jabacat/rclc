@@ -38,18 +38,29 @@ fn discover(
         Some(a) => {
             if &discoveryrequest.requested_by == &a.discovery.looking_for {
                 println!("It's a match! {:?}", a);
+                return Json(DiscoveryResponse {
+                    status: Status::Match,
+                    discovery: Some(a.discovery.clone()),
+                    message: "It's a match!".to_string(),
+                });
+            } else {
+                println!("No match! {:?}", a);
+                return Json(DiscoveryResponse {
+                    status: Status::NoMatch,
+                    discovery: None,
+                    message: "No client found, advertisement placed".to_string(),
+                });
             }
         },
         None => {
             println!("No advertisement found");
+            return Json(DiscoveryResponse {
+                status: Status::NoMatch,
+                discovery: None,
+                message: "No client found, advertisement placed".to_string(),
+            });
         }
-    }
-
-    Json(DiscoveryResponse {
-        status: Status::NoMatch,
-        discovery: None,
-        message: "Looking for clients".to_string(),
-    })
+    };
 }
 
 pub fn get_routes() -> Vec<rocket::Route> {
