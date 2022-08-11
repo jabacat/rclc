@@ -31,8 +31,7 @@ pub async fn discover(disc_conf: DiscoveryServerConfig, disc_request: DiscoveryR
         .post(url)
         .json(&disc_request)
         .send()
-        .await
-        .expect("Could not discover");
+        .await?;
 
     Ok(res.text().await?)
 }
