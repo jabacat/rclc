@@ -1,9 +1,11 @@
-use rocket::serde::{Deserialize, Serialize};
+#[cfg(feature = "rocket")]
 use rocket::FromForm;
+
+use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
 
-#[derive(FromForm, Debug, Deserialize, Serialize, Clone)]
-#[serde(crate = "rocket::serde")]
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[cfg_attr(feature = "rocket", derive(FromForm))]
 pub struct DiscoveryRequest {
     pub ip: Option<IpAddr>,
     pub port: u16,
