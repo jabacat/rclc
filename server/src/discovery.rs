@@ -1,18 +1,8 @@
-use rocket::serde::{Deserialize, Serialize};
+use super::structures::DiscoveryRequest;
+use rocket::serde::Serialize;
 use std::collections::HashMap;
-use std::net::IpAddr;
 use std::sync::RwLock;
 use std::time::SystemTime;
-
-#[derive(FromForm, Debug, Deserialize, Serialize, Clone)]
-#[serde(crate = "rocket::serde")]
-pub struct DiscoveryRequest {
-    pub ip: Option<IpAddr>,
-    pub port: u16,
-    pub requested_by: String,
-    pub looking_for: String,
-    pub public_key: String, // Lets get proper parsing on this value done at some point
-}
 
 #[derive(Debug)]
 pub struct Advertisement {
