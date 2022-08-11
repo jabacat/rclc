@@ -1,7 +1,9 @@
 use super::reqwest;
-use super::structures::DiscoveryRequest;
 use anyhow::Result;
+use super::DiscoveryRequest;
+use log::debug;
 
+#[derive(Clone)]
 pub struct DiscoveryServerConfig {
     pub url: String,
 }
@@ -20,14 +22,17 @@ pub async fn discover_version(disc_conf: DiscoveryServerConfig) -> Result<String
     Ok(res.text().await?)
 }
 
-pub async fn discover(disc_conf: DiscoveryServerConfig, disc_request: DiscoveryRequest) {
+pub async fn discover(disc_conf: DiscoveryServerConfig, disc_request: DiscoveryRequest) -> Result<String> {
     let client = reqwest::Client::new();
+    let url = disc_conf.url + "/discover";
+    debug!("{}", url);
+
     let res = client
-        .post(disc_conf.url + "/discover")
-        .body("Hello!")
+        .post(url)
+        .json(&disc_request)
         .send()
         .await
         .expect("Could not discover");
 
-    println!("res = {:?}", res);
+    Ok(res.text().await?)
 }
