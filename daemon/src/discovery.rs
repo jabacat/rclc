@@ -1,5 +1,5 @@
-use super::structures::DiscoveryRequest;
 use super::reqwest;
+use super::structures::DiscoveryRequest;
 
 pub struct DiscoveryServerConfig {
     pub url: String,

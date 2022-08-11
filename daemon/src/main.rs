@@ -2,8 +2,8 @@ use reqwest;
 
 use common::structures;
 
-pub mod notif;
 pub mod discovery;
+pub mod notif;
 
 fn main() {
     println!("Hello, world!");
