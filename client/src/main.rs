@@ -23,8 +23,14 @@ const PROMPT: &str = "> ";
 
 struct State<'a> {
     stdout: StdoutLock<'a>,
+
+    /// the current text in the input field
     input: String,
+
+    /// a handle to the `~/.rclc/dtocbuf` fifo in read-only mode
     dtocbuf: File,
+
+    /// a handle to the `~/.rclc/ctodbuf` fifo in write-only mode
     ctodbuf: File,
 }
 
@@ -39,9 +45,10 @@ impl<'a> State<'a> {
 
         let home_dir = dirs::home_dir().context("couldn't get home directory")?;
 
-        // this blocks the client until the daemon opens the file to read
         print!("waiting for daemon connection...");
         stdout.flush()?;
+        // aquire a write handle on the ctod fifo
+        // this blocks the client until the daemon opens the file to read
         let ctodbuf = File::options()
             .write(true)
             .open(home_dir.join(".rclc/ctodbuf"))
@@ -52,9 +59,10 @@ impl<'a> State<'a> {
             .queue(terminal::Clear(ClearType::CurrentLine))?
             .execute(cursor::MoveToColumn(0))?;
 
-        // this blocks until the daemon opens the file to write
         print!("waiting for daemon response...");
         stdout.flush()?;
+        // aquire a read handle on the dtoc file
+        // this blocks until the daemon opens the file to write
         let dtocbuf = File::open(home_dir.join(".rclc/dtocbuf"))
             .context("couldn't open daemon->client fifo")?;
 
@@ -71,10 +79,14 @@ impl<'a> State<'a> {
         })
     }
 
+    /// start the event loop
     fn start(&mut self) -> Result<()> {
+        // a mio poll lets you monitor for readiness events from multiple sources.
         let mut poll = Poll::new().context("failed to start mio poll")?;
         let mut events = Events::with_capacity(1024);
 
+        // register the dtoc fifo to notify the poll whenever it it readable (whenever a new
+        // message from the daemon is available to read).
         poll.registry()
             .register(
                 &mut SourceFd(&self.dtocbuf.as_raw_fd()),
@@ -83,6 +95,8 @@ impl<'a> State<'a> {
             )
             .context("could not register daemon->client fifo with mio poll")?;
 
+        // register stdin to notify the poll whenever it is readalbe (whenever the user presses
+        // a key).
         poll.registry()
             .register(
                 &mut SourceFd(&io::stdin().as_raw_fd()),
@@ -95,6 +109,7 @@ impl<'a> State<'a> {
         self.stdout.flush()?;
 
         'evt_loop: loop {
+            // block until the next poll event happens
             poll.poll(&mut events, None)
                 .context("failed to poll mio poll")?;
 
@@ -166,6 +181,7 @@ impl<'a> State<'a> {
     fn handle_kev(&mut self, kev: KeyEvent) -> Result<ControlFlow<()>> {
         match kev.code {
             KeyCode::Char('c') if kev.modifiers == KeyModifiers::CONTROL => {
+                // notify the event loop to break
                 return Ok(ControlFlow::Break(()));
             }
             KeyCode::Backspace => {
@@ -175,6 +191,10 @@ impl<'a> State<'a> {
                 }
             }
             KeyCode::Enter => {
+                if self.input.is_empty() {
+                    return Ok(ControlFlow::Continue(()));
+                }
+
                 self.send_fifo_msg(&ClientToDaemonMsg::Send(self.input.clone()))?;
                 self.input.clear();
                 self.stdout
