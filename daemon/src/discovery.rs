@@ -5,7 +5,7 @@ pub struct DiscoveryServerConfig {
     pub url: String,
 }
 
-async fn discover_root(disc_conf: DiscoveryServerConfig) {
+async fn discover_root(disc_conf: DiscoveryServerConfig) -> String {
     let client = reqwest::Client::new();
     let res = client
         .get(disc_conf.url)
@@ -13,7 +13,7 @@ async fn discover_root(disc_conf: DiscoveryServerConfig) {
         .await
         .expect("Could not await");
 
-    println!("res = {:?}", res);
+    res.text().await.unwrap()
 }
 
 async fn discover_version(disc_conf: DiscoveryServerConfig) -> String {
