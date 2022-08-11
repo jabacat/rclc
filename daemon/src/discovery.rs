@@ -16,6 +16,17 @@ async fn discover_root(disc_conf: DiscoveryServerConfig) {
     println!("res = {:?}", res);
 }
 
+async fn discover_version(disc_conf: DiscoveryServerConfig) -> String {
+    let client = reqwest::Client::new();
+    let res = client
+        .get(disc_conf.url + "/version")
+        .send()
+        .await
+        .expect("Could not await");
+
+    res.text().await.unwrap()
+}
+
 async fn discover(disc_conf: DiscoveryServerConfig, disc_request: DiscoveryRequest) {
     let client = reqwest::Client::new();
     let res = client
