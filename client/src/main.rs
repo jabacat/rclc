@@ -1,6 +1,6 @@
 use anyhow::{bail, Context, Result};
 use args::Opts;
-use common::client_daemon::DaemonToClientMsg;
+use common::client_daemon::{ClientToDaemonMsg, DaemonToClientMsg};
 use crossterm::{
     cursor,
     event::{self, Event, KeyCode, KeyEvent, KeyModifiers},
@@ -25,12 +25,12 @@ struct State<'a> {
     stdout: StdoutLock<'a>,
     input: String,
     dtocbuf: File,
-    // ctodbuf: File,
+    ctodbuf: File,
 }
 
 impl<'a> State<'a> {
     fn new() -> Result<Self> {
-        let stdout = io::stdout().lock();
+        let mut stdout = io::stdout().lock();
         if !stdout.is_tty() {
             bail!("stdout is not a tty");
         }
@@ -39,18 +39,35 @@ impl<'a> State<'a> {
 
         let home_dir = dirs::home_dir().context("couldn't get home directory")?;
 
-        // // i think this blocks the whole program for some reason?
-        // let ctodbuf = File::options().write(true).open(home_dir.join(".rclc/ctodbuf"))
-        //     .context("couldn't open client->daemon fifo")?;
+        // this blocks the client until the daemon opens the file to read
+        print!("waiting for daemon connection...");
+        stdout.flush()?;
+        let ctodbuf = File::options()
+            .write(true)
+            .open(home_dir.join(".rclc/ctodbuf"))
+            .context("couldn't open client->daemon fifo")?;
 
+        // clear waiting message
+        stdout
+            .queue(terminal::Clear(ClearType::CurrentLine))?
+            .execute(cursor::MoveToColumn(0))?;
+
+        // this blocks until the daemon opens the file to write
+        print!("waiting for daemon response...");
+        stdout.flush()?;
         let dtocbuf = File::open(home_dir.join(".rclc/dtocbuf"))
             .context("couldn't open daemon->client fifo")?;
+
+        // clear waiting message
+        stdout
+            .queue(terminal::Clear(ClearType::CurrentLine))?
+            .execute(cursor::MoveToColumn(0))?;
 
         Ok(Self {
             stdout,
             input: String::new(),
             dtocbuf,
-            // ctodbuf,
+            ctodbuf,
         })
     }
 
@@ -117,10 +134,10 @@ impl<'a> State<'a> {
         Ok(())
     }
 
-    // fn send_fifo_msg(&mut self, msg: &ClientToDaemonMsg) -> Result<()> {
-    //     rmp_serde::encode::write(&mut self.ctodbuf, &msg)
-    //         .with_context(|| format!("couldn't write message {msg:?} to fifo"))
-    // }
+    fn send_fifo_msg(&mut self, msg: &ClientToDaemonMsg) -> Result<()> {
+        rmp_serde::encode::write(&mut self.ctodbuf, &msg)
+            .with_context(|| format!("couldn't write message {msg:?} to fifo"))
+    }
 
     fn handle_fifo_msg(&mut self) -> Result<()> {
         let mut data = Vec::new();
@@ -158,10 +175,12 @@ impl<'a> State<'a> {
                 }
             }
             KeyCode::Enter => {
-                // self.send_fifo_msg(&ClientToDaemonMsg::Send(self.input.clone()))?;
-                // self.input.clear();
-                // self.stdout.queue(terminal::Clear(ClearType::CurrentLine))?;
-                // print!("{}", PROMPT);
+                self.send_fifo_msg(&ClientToDaemonMsg::Send(self.input.clone()))?;
+                self.input.clear();
+                self.stdout
+                    .queue(terminal::Clear(ClearType::CurrentLine))?
+                    .queue(cursor::MoveToColumn(0))?;
+                print!("{}", PROMPT);
             }
             KeyCode::Char(c) => {
                 self.input.push(c);
