@@ -4,6 +4,7 @@ extern crate rocket;
 pub mod discovery;
 pub mod routes;
 
+use common::structures;
 use routes::get_routes;
 use std::collections::HashMap;
 use std::sync::RwLock;

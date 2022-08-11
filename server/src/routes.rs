@@ -1,6 +1,5 @@
-use crate::discovery::{
-    Advertisement, DiscoveryQueue, DiscoveryRequest, DiscoveryResponse, Status,
-};
+use crate::discovery::{Advertisement, DiscoveryQueue, DiscoveryResponse, Status};
+use crate::structures::DiscoveryRequest;
 use rocket::serde::json::Json;
 use rocket::State;
 use std::net::SocketAddr;
