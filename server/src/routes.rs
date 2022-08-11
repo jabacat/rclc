@@ -31,16 +31,17 @@ fn discover(
         expires_in: 5000,
     };
     println!("{:?}", &advert);
-    discoveryqueue.queue.write().unwrap().insert(discoveryrequest.requested_by.clone(), advert);
+    discoveryqueue.queue.write().expect("Failed to gain lock on discovery queue").insert(discoveryrequest.requested_by.clone(), advert);
 
 
-    match discoveryqueue.queue.read().unwrap().get(&discoveryrequest.looking_for) {
+    match discoveryqueue.queue.read().expect("Failed to gain lock on discovery queue").get(&discoveryrequest.looking_for) {
         Some(a) => {
             if &discoveryrequest.requested_by == &a.discovery.looking_for {
                 println!("It's a match! {:?}", a);
                 return Json(DiscoveryResponse {
                     status: Status::Match,
                     discovery: Some(a.discovery.clone()),
+                    error: None,
                     message: "It's a match!".to_string(),
                 });
             } else {
@@ -48,6 +49,7 @@ fn discover(
                 return Json(DiscoveryResponse {
                     status: Status::NoMatch,
                     discovery: None,
+                    error: None,
                     message: "No client found, advertisement placed".to_string(),
                 });
             }
@@ -57,6 +59,7 @@ fn discover(
             return Json(DiscoveryResponse {
                 status: Status::NoMatch,
                 discovery: None,
+                error: None,
                 message: "No client found, advertisement placed".to_string(),
             });
         }

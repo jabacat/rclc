@@ -38,6 +38,7 @@ pub enum Status {
 #[serde(crate = "rocket::serde")]
 pub struct DiscoveryResponse {
     pub status: Status,
+    pub error: Option<String>,
     pub discovery: Option<DiscoveryRequest>,
     pub message: String,
 }
