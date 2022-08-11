@@ -75,11 +75,16 @@ mod test {
     use super::super::rocket;
     use rocket::http::ContentType;
     use rocket::local::blocking::Client;
+    use rocket::http::Status as HttpStatus;
 
     #[test]
     fn discover_test() {
         let client = Client::tracked(rocket()).unwrap();
-        let response = client.post("/discover").header(ContentType::JSON).body(r#"{"ip":"93.184.216.34","port":1000,"requested_by":1408191,"looking_for":49384,"public_key":"545435454545"}"#).dispatch();
-        assert_eq!(response.into_string().unwrap(), "Looking for clients");
+        let response_a = client.post("/discover").header(ContentType::JSON).body(r#"{"ip":"123.123.123.123","port":1000,"requested_by":"PersonA","looking_for":"PersonB","public_key":"abcdefg1"}"#).dispatch();
+        let response_b = client.post("/discover").header(ContentType::JSON).body(r#"{"ip":"123.123.123.123","port":1000,"requested_by":"PersonB","looking_for":"PersonA","public_key":"abcdefg2"}"#).dispatch();
+        assert_eq!(response_a.status(), HttpStatus::Ok);
+        assert_eq!(response_b.status(), HttpStatus::Ok);
+        assert_eq!(response_a.into_string().unwrap(), r#"{"status":"NoMatch","error":null,"discovery":null,"message":"No client found, advertisement placed"}"#);
+        assert_eq!(response_b.into_string().unwrap(), r#"{"status":"Match","error":null,"discovery":{"ip":"123.123.123.123","port":1000,"requested_by":"PersonA","looking_for":"PersonB","public_key":"abcdefg1"},"message":"It's a match!"}"#);
     }
 }
