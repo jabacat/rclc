@@ -18,6 +18,7 @@ async fn main() {
         url: "http://127.0.0.1:8000".to_string(),
     };
 
+    // Request the discovery server root
     match discover_root(disc_conf.clone()).await {
         Ok(a) => {
             println!("{a}")
@@ -25,15 +26,17 @@ async fn main() {
         Err(_) => eprintln!("Could not connect to server. Possible it does not exist yet."),
     }
 
-    let disc_req_1 = DiscoveryRequest {
+    let disc_req_a = DiscoveryRequest {
         ip: Some(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1))),
         port: 2121,
-        requested_by: "4857689".to_string(),
-        looking_for: "389475783".to_string(),
+        requested_by: "A".to_string(),
+        looking_for: "B".to_string(),
         public_key: "qwertyuiop".to_string(),
     };
 
-    match discover(disc_conf.clone(), disc_req_1).await {
+    // Request to connect as person A
+    // Match is not found because A is first
+    match discover(disc_conf.clone(), disc_req_a).await {
         Ok(a) => {
             if a.contains("NoMatch") {
                 println!("No match!");
@@ -42,15 +45,17 @@ async fn main() {
         Err(_) => eprintln!("Could not connect to server. Possible it does not exist yet."),
     }
 
-    let disc_req_2 = DiscoveryRequest {
+    let disc_req_b = DiscoveryRequest {
         ip: Some(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1))),
         port: 2121,
-        requested_by: "389475783".to_string(),
-        looking_for: "4857689".to_string(),
+        requested_by: "B".to_string(),
+        looking_for: "A".to_string(),
         public_key: "qwertyuiop".to_string(),
     };
 
-    match discover(disc_conf, disc_req_2).await {
+    // Request to connect as person B
+    // Match is found because B is the second
+    match discover(disc_conf, disc_req_b).await {
         Ok(a) => {
             if !a.contains("NoMatch") {
                 println!("Match!");
