@@ -1,4 +1,6 @@
-use crate::discovery::{DiscoveryRequest, DiscoveryQueue, Advertisement, DiscoveryResponse, Status};
+use crate::discovery::{
+    Advertisement, DiscoveryQueue, DiscoveryRequest, DiscoveryResponse, Status,
+};
 use rocket::serde::json::Json;
 use rocket::State;
 use std::net::SocketAddr;
@@ -31,10 +33,18 @@ fn discover(
         expires_in: 5000,
     };
     println!("{:?}", &advert);
-    discoveryqueue.queue.write().expect("Failed to gain lock on discovery queue").insert(discoveryrequest.requested_by.clone(), advert);
+    discoveryqueue
+        .queue
+        .write()
+        .expect("Failed to gain lock on discovery queue")
+        .insert(discoveryrequest.requested_by.clone(), advert);
 
-
-    match discoveryqueue.queue.read().expect("Failed to gain lock on discovery queue").get(&discoveryrequest.looking_for) {
+    match discoveryqueue
+        .queue
+        .read()
+        .expect("Failed to gain lock on discovery queue")
+        .get(&discoveryrequest.looking_for)
+    {
         Some(a) => {
             if &discoveryrequest.requested_by == &a.discovery.looking_for {
                 println!("It's a match! {:?}", a);
@@ -53,7 +63,7 @@ fn discover(
                     message: "No client found, advertisement placed".to_string(),
                 });
             }
-        },
+        }
         None => {
             println!("No advertisement found");
             return Json(DiscoveryResponse {
@@ -74,8 +84,8 @@ pub fn get_routes() -> Vec<rocket::Route> {
 mod test {
     use super::super::rocket;
     use rocket::http::ContentType;
-    use rocket::local::blocking::Client;
     use rocket::http::Status as HttpStatus;
+    use rocket::local::blocking::Client;
 
     #[test]
     fn discover_test() {
@@ -84,7 +94,13 @@ mod test {
         let response_b = client.post("/discover").header(ContentType::JSON).body(r#"{"ip":"123.123.123.123","port":1000,"requested_by":"PersonB","looking_for":"PersonA","public_key":"abcdefg2"}"#).dispatch();
         assert_eq!(response_a.status(), HttpStatus::Ok);
         assert_eq!(response_b.status(), HttpStatus::Ok);
-        assert_eq!(response_a.into_string().unwrap(), r#"{"status":"NoMatch","error":null,"discovery":null,"message":"No client found, advertisement placed"}"#);
-        assert_eq!(response_b.into_string().unwrap(), r#"{"status":"Match","error":null,"discovery":{"ip":"123.123.123.123","port":1000,"requested_by":"PersonA","looking_for":"PersonB","public_key":"abcdefg1"},"message":"It's a match!"}"#);
+        assert_eq!(
+            response_a.into_string().unwrap(),
+            r#"{"status":"NoMatch","error":null,"discovery":null,"message":"No client found, advertisement placed"}"#
+        );
+        assert_eq!(
+            response_b.into_string().unwrap(),
+            r#"{"status":"Match","error":null,"discovery":{"ip":"123.123.123.123","port":1000,"requested_by":"PersonA","looking_for":"PersonB","public_key":"abcdefg1"},"message":"It's a match!"}"#
+        );
     }
 }

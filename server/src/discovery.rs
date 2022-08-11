@@ -1,7 +1,7 @@
 use rocket::serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::net::IpAddr;
 use std::sync::RwLock;
-use std::collections::HashMap;
 use std::time::SystemTime;
 
 #[derive(FromForm, Debug, Deserialize, Serialize, Clone)]
