@@ -13,19 +13,17 @@ pub async fn discover_root(disc_conf: DiscoveryServerConfig) -> Result<String> {
         .send()
         .await?;
 
-    let text = res.text().await?;
-    Ok(text)
+    Ok(res.text().await?)
 }
 
-pub async fn discover_version(disc_conf: DiscoveryServerConfig) -> String {
+pub async fn discover_version(disc_conf: DiscoveryServerConfig) -> Result<String> {
     let client = reqwest::Client::new();
     let res = client
         .get(disc_conf.url + "/version")
         .send()
-        .await
-        .expect("Could not await");
+        .await?;
 
-    res.text().await.unwrap()
+    Ok(res.text().await?)
 }
 
 pub async fn discover(disc_conf: DiscoveryServerConfig, disc_request: DiscoveryRequest) {
@@ -35,7 +33,7 @@ pub async fn discover(disc_conf: DiscoveryServerConfig, disc_request: DiscoveryR
         .body("Hello!")
         .send()
         .await
-        .expect("Could not await");
+        .expect("Could not discover");
 
     println!("res = {:?}", res);
 }
