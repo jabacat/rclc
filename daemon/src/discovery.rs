@@ -1,6 +1,6 @@
 use super::reqwest;
-use anyhow::Result;
 use super::DiscoveryRequest;
+use anyhow::Result;
 use log::debug;
 
 #[derive(Clone)]
@@ -22,16 +22,15 @@ pub async fn discover_version(disc_conf: DiscoveryServerConfig) -> Result<String
     Ok(res.text().await?)
 }
 
-pub async fn discover(disc_conf: DiscoveryServerConfig, disc_request: DiscoveryRequest) -> Result<String> {
+pub async fn discover(
+    disc_conf: DiscoveryServerConfig,
+    disc_request: DiscoveryRequest,
+) -> Result<String> {
     let client = reqwest::Client::new();
     let url = disc_conf.url + "/discover";
     debug!("{}", url);
 
-    let res = client
-        .post(url)
-        .json(&disc_request)
-        .send()
-        .await?;
+    let res = client.post(url).json(&disc_request).send().await?;
 
     Ok(res.text().await?)
 }
