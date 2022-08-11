@@ -8,20 +8,14 @@ pub struct DiscoveryServerConfig {
 
 pub async fn discover_root(disc_conf: DiscoveryServerConfig) -> Result<String> {
     let client = reqwest::Client::new();
-    let res = client
-        .get(disc_conf.url)
-        .send()
-        .await?;
+    let res = client.get(disc_conf.url).send().await?;
 
     Ok(res.text().await?)
 }
 
 pub async fn discover_version(disc_conf: DiscoveryServerConfig) -> Result<String> {
     let client = reqwest::Client::new();
-    let res = client
-        .get(disc_conf.url + "/version")
-        .send()
-        .await?;
+    let res = client.get(disc_conf.url + "/version").send().await?;
 
     Ok(res.text().await?)
 }

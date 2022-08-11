@@ -17,7 +17,9 @@ async fn main() {
     };
 
     match discover_root(disc_conf).await {
-        Ok(a) => {println!("{a}")},
+        Ok(a) => {
+            println!("{a}")
+        }
         Err(_) => eprintln!("Could not connect to server. Possible it does not exist yet."),
     }
 }
