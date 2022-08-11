@@ -1,10 +1,10 @@
-use rocket::serde::Deserialize;
+use rocket::serde::{Deserialize, Serialize};
 use std::net::IpAddr;
 use std::sync::RwLock;
 use std::collections::HashMap;
 use std::time::SystemTime;
 
-#[derive(FromForm, Debug, Deserialize, Clone)]
+#[derive(FromForm, Debug, Deserialize, Serialize, Clone)]
 #[serde(crate = "rocket::serde")]
 pub struct DiscoveryRequest {
     pub ip: Option<IpAddr>,
@@ -24,4 +24,20 @@ pub struct Advertisement {
 #[derive(Debug)]
 pub struct DiscoveryQueue {
     pub queue: RwLock<HashMap<String, Advertisement>>,
+}
+
+#[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
+pub enum Status {
+    Match,
+    NoMatch,
+    Failure,
+}
+
+#[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
+pub struct DiscoveryResponse {
+    pub status: Status,
+    pub discovery: Option<DiscoveryRequest>,
+    pub message: String,
 }

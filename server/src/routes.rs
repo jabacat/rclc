@@ -1,4 +1,4 @@
-use crate::discovery::{DiscoveryRequest, DiscoveryQueue, Advertisement};
+use crate::discovery::{DiscoveryRequest, DiscoveryQueue, Advertisement, DiscoveryResponse, Status};
 use rocket::serde::json::Json;
 use rocket::State;
 use std::net::SocketAddr;
@@ -15,7 +15,7 @@ fn discover(
     remote_addr: Option<SocketAddr>,
     mut discoveryrequest: Json<DiscoveryRequest>,
     discoveryqueue: &State<DiscoveryQueue>,
-) -> String {
+) -> Json<DiscoveryResponse> {
     if discoveryrequest.ip.is_none() {
         let ip = match remote_addr {
             Some(addr) => Some(addr.ip()),
@@ -45,7 +45,11 @@ fn discover(
         }
     }
 
-    "Looking for clients".to_string()
+    Json(DiscoveryResponse {
+        status: Status::NoMatch,
+        discovery: None,
+        message: "Looking for clients".to_string(),
+    })
 }
 
 pub fn get_routes() -> Vec<rocket::Route> {
