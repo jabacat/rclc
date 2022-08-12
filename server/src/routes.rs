@@ -10,6 +10,16 @@ fn home() -> String {
     "Hello Jabacat!".to_string()
 }
 
+#[get("/info")]
+fn info() -> String {
+    format!(
+        r#"{{"motd":"{}","version":"{}","acceptingrequests":true}}"#,
+        option_env!("RCLC_DISCOVERY_MOTD")
+            .unwrap_or("Set an MOTD with the RCLC_DISCOVERY_MOTD environment variable"),
+        option_env!("CARGO_PKG_VERSION").unwrap_or("unknown")
+    )
+}
+
 #[post("/discover", format = "json", data = "<discoveryrequest>")]
 // If the ip is not provided, use the ip of the client sending the request
 fn discover(
@@ -76,7 +86,7 @@ fn discover(
 }
 
 pub fn get_routes() -> Vec<rocket::Route> {
-    routes![home, discover]
+    routes![home, discover, info]
 }
 
 #[cfg(test)]
@@ -100,6 +110,22 @@ mod test {
         assert_eq!(
             response_b.into_string().unwrap(),
             r#"{"status":"Match","error":null,"discovery":{"ip":"123.123.123.123","port":1000,"requested_by":"PersonA","looking_for":"PersonB","public_key":"abcdefg1"},"message":"It's a match!"}"#
+        );
+    }
+
+    #[test]
+    fn info_test() {
+        let client = Client::tracked(rocket()).unwrap();
+        let response = client.get("/info").dispatch();
+        assert_eq!(response.status(), HttpStatus::Ok);
+        assert_eq!(
+            response.into_string().unwrap(),
+            format!(
+                r#"{{"motd":"{}","version":"{}","acceptingrequests":true}}"#,
+                option_env!("RCLC_DISCOVERY_MOTD")
+                    .unwrap_or("Set an MOTD with the RCLC_DISCOVERY_MOTD environment variable"),
+                option_env!("CARGO_PKG_VERSION").unwrap_or("unknown")
+            )
         );
     }
 }
