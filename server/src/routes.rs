@@ -112,4 +112,20 @@ mod test {
             r#"{"status":"Match","error":null,"discovery":{"ip":"123.123.123.123","port":1000,"requested_by":"PersonA","looking_for":"PersonB","public_key":"abcdefg1"},"message":"It's a match!"}"#
         );
     }
+
+    #[test]
+    fn info_test() {
+        let client = Client::tracked(rocket()).unwrap();
+        let response = client.get("/info").dispatch();
+        assert_eq!(response.status(), HttpStatus::Ok);
+        assert_eq!(
+            response.into_string().unwrap(),
+            format!(
+                r#"{{"motd":"{}","version":"{}","acceptingrequests":true}}"#,
+                option_env!("RCLC_DISCOVERY_MOTD")
+                    .unwrap_or("Set an MOTD with the RCLC_DISCOVERY_MOTD environment variable"),
+                option_env!("CARGO_PKG_VERSION").unwrap_or("unknown")
+            )
+        );
+    }
 }
