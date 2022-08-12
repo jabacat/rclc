@@ -12,7 +12,12 @@ fn home() -> String {
 
 #[get("/info")]
 fn info() -> String {
-    format!(r#"{{"motd":"{}","version":"{}","acceptingrequests":true}}"#, option_env!("RCLC_DISCOVERY_MOTD").unwrap_or("Set an MOTD with the RCLC_DISCOVERY_MOTD environment variable"), option_env!("CARGO_PKG_VERSION").unwrap_or("unknown"))
+    format!(
+        r#"{{"motd":"{}","version":"{}","acceptingrequests":true}}"#,
+        option_env!("RCLC_DISCOVERY_MOTD")
+            .unwrap_or("Set an MOTD with the RCLC_DISCOVERY_MOTD environment variable"),
+        option_env!("CARGO_PKG_VERSION").unwrap_or("unknown")
+    )
 }
 
 #[post("/discover", format = "json", data = "<discoveryrequest>")]
