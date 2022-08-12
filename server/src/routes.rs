@@ -10,6 +10,11 @@ fn home() -> String {
     "Hello Jabacat!".to_string()
 }
 
+#[get("/info")]
+fn info() -> String {
+    format!(r#"{{"motd":"{}","version":"{}","acceptingrequests":true}}"#, option_env!("RCLC_DISCOVERY_MOTD").unwrap_or("Set an MOTD with the RCLC_DISCOVERY_MOTD environment variable"), option_env!("CARGO_PKG_VERSION").unwrap_or("unknown"))
+}
+
 #[post("/discover", format = "json", data = "<discoveryrequest>")]
 // If the ip is not provided, use the ip of the client sending the request
 fn discover(
@@ -76,7 +81,7 @@ fn discover(
 }
 
 pub fn get_routes() -> Vec<rocket::Route> {
-    routes![home, discover]
+    routes![home, discover, info]
 }
 
 #[cfg(test)]
