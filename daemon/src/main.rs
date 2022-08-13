@@ -1,10 +1,11 @@
 use reqwest;
 
-use common::structures::DiscoveryRequest;
+use common::structures::{DiscoveryRequest, DiscoveryResponse, Status};
 use discovery::{discover, discover_root, DiscoveryServerConfig};
 use std::net::{IpAddr, Ipv4Addr};
 
 pub mod discovery;
+pub mod contact;
 pub mod notif;
 
 #[tokio::main]
@@ -38,9 +39,7 @@ async fn main() {
     // Match is not found because A is first
     match discover(disc_conf.clone(), disc_req_a).await {
         Ok(a) => {
-            if a.contains("NoMatch") {
-                println!("No match!");
-            }
+            println!("{:?}", a);
         }
         Err(_) => eprintln!("Could not connect to server. Possible it does not exist yet."),
     }
@@ -57,9 +56,7 @@ async fn main() {
     // Match is found because B is the second
     match discover(disc_conf, disc_req_b).await {
         Ok(a) => {
-            if !a.contains("NoMatch") {
-                println!("Match!");
-            }
+            println!("{:?}", a);
         }
         Err(_) => eprintln!("Could not connect to server. Possible it does not exist yet."),
     }
