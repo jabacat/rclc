@@ -4,8 +4,8 @@ use common::structures::{DiscoveryRequest, DiscoveryResponse, Status};
 use discovery::{discover, discover_root, DiscoveryServerConfig};
 use std::net::{IpAddr, Ipv4Addr};
 
-pub mod discovery;
 pub mod contact;
+pub mod discovery;
 pub mod notif;
 
 #[tokio::main]

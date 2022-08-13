@@ -1,9 +1,9 @@
 use super::reqwest;
 use super::{DiscoveryRequest, DiscoveryResponse};
 use crate::contact::Contact;
-use serde_json::Result as ParseResult;
 use anyhow::Result;
 use log::debug;
+use serde_json::Result as ParseResult;
 
 #[derive(Clone)]
 pub struct DiscoveryServerConfig {
