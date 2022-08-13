@@ -28,10 +28,7 @@ fn discover(
     discoveryqueue: &State<DiscoveryQueue>,
 ) -> Json<DiscoveryResponse> {
     if discoveryrequest.ip.is_none() {
-        let ip = match remote_addr {
-            Some(addr) => Some(addr.ip()),
-            None => None,
-        };
+        let ip = remote_addr.map(|addr| addr.ip());
         discoveryrequest.ip = ip;
     }
 
@@ -55,34 +52,34 @@ fn discover(
         .get(&discoveryrequest.looking_for)
     {
         Some(a) => {
-            if &discoveryrequest.requested_by == &a.discovery.looking_for {
+            if discoveryrequest.requested_by == a.discovery.looking_for {
                 println!("It's a match! {:?}", a);
-                return Json(DiscoveryResponse {
+                Json(DiscoveryResponse {
                     status: Status::Match,
                     discovery: Some(a.discovery.clone()),
                     error: None,
                     message: "It's a match!".to_string(),
-                });
+                })
             } else {
                 println!("No match! {:?}", a);
-                return Json(DiscoveryResponse {
+                Json(DiscoveryResponse {
                     status: Status::NoMatch,
                     discovery: None,
                     error: None,
                     message: "No client found, advertisement placed".to_string(),
-                });
+                })
             }
         }
         None => {
             println!("No advertisement found");
-            return Json(DiscoveryResponse {
+            Json(DiscoveryResponse {
                 status: Status::NoMatch,
                 discovery: None,
                 error: None,
                 message: "No client found, advertisement placed".to_string(),
-            });
+            })
         }
-    };
+    }
 }
 
 pub fn get_routes() -> Vec<rocket::Route> {
