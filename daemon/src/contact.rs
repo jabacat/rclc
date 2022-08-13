@@ -1,5 +1,5 @@
 use super::DiscoveryResponse;
-use std::net::IpAddr;
+use std::net::{IpAddr, Ipv4Addr};
 
 /// This structure is responsible for storing the contact information of a peer.
 /// It can be obtained either through peer discovery (REST API) or be manually imported
@@ -46,5 +46,32 @@ pub fn from_discovery(response: &DiscoveryResponse) -> Contact {
             .expect("Cannot parse a discovery response with no discovery request object")
             .public_key
             .clone(),
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn test_from_discovery() {
+        use crate::{DiscoveryRequest, Status};
+
+        let request = DiscoveryRequest {
+            ip: Some(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1))),
+            port: 2121,
+            requested_by: "A".to_string(),
+            looking_for: "B".to_string(),
+            public_key: "qwertyuiop".to_string(),
+        };
+
+        let response = DiscoveryResponse {
+            status: Status::Match,
+            error: None,
+            discovery: Some(request),
+            message: "Hi >_<".to_string(),
+        };
+
+        let contact = from_discovery(&response);
+        assert_eq!(contact.ip, IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)));
     }
 }
