@@ -17,3 +17,4 @@ dirs = "4.0.0"
 
 [dependencies.common]
 path = "../common"
+features = ["rocket"]

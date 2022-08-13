@@ -13,3 +13,20 @@ pub struct DiscoveryRequest {
     pub looking_for: String,
     pub public_key: String, // Lets get proper parsing on this value done at some point
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(crate = "rocket::serde")]
+pub enum Status {
+    Match,
+    NoMatch,
+    Failure,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(crate = "rocket::serde")]
+pub struct DiscoveryResponse {
+    pub status: Status,
+    pub error: Option<String>,
+    pub discovery: Option<DiscoveryRequest>,
+    pub message: String,
+}
