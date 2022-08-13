@@ -1,5 +1,5 @@
 use super::DiscoveryResponse;
-use std::net::{IpAddr, Ipv4Addr};
+use std::net::IpAddr;
 
 /// This structure is responsible for storing the contact information of a peer.
 /// It can be obtained either through peer discovery (REST API) or be manually imported
@@ -24,29 +24,37 @@ pub enum VerificationMethod {
     Manual,
 }
 
-pub fn from_discovery(response: &DiscoveryResponse) -> Contact {
-    Contact {
+#[derive(Debug)]
+pub struct ContactParseError {
+    kind: ContactParseErrorKind,
+}
+
+#[derive(Debug)]
+pub enum ContactParseErrorKind {
+    MissingDiscoveryRequest,
+    MissingIP,
+}
+
+pub fn from_discovery(response: &DiscoveryResponse) -> Result<Contact, ContactParseError> {
+    let discovery_request = response.discovery.as_ref().ok_or(ContactParseError {
+        kind: ContactParseErrorKind::MissingDiscoveryRequest,
+    })?;
+
+    let ip = discovery_request.ip.ok_or(ContactParseError {
+        kind: ContactParseErrorKind::MissingIP,
+    })?;
+
+    let port = discovery_request.port;
+    let public_key = discovery_request.public_key.clone();
+
+    Ok(Contact {
         prefered_name: None,
         github_username: None,
         verification_method: VerificationMethod::Unverified,
-        ip: response
-            .discovery
-            .as_ref()
-            .expect("Cannot parse a discovery response with no discovery request object")
-            .ip
-            .expect("Cannot parse a discovery response with no discovery request ip"),
-        port: response
-            .discovery
-            .as_ref()
-            .expect("Cannot parse a discovery response with no discovery request object")
-            .port,
-        public_key: response
-            .discovery
-            .as_ref()
-            .expect("Cannot parse a discovery response with no discovery request object")
-            .public_key
-            .clone(),
-    }
+        ip,
+        port,
+        public_key,
+    })
 }
 
 #[cfg(test)]
@@ -54,7 +62,9 @@ mod test {
     use super::*;
     #[test]
     fn test_from_discovery() {
-        use crate::{DiscoveryRequest, Status};
+        use crate::DiscoveryRequest;
+        use common::structures::Status;
+        use std::net::Ipv4Addr;
 
         let request = DiscoveryRequest {
             ip: Some(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1))),
@@ -71,7 +81,7 @@ mod test {
             message: "Hi >_<".to_string(),
         };
 
-        let contact = from_discovery(&response);
+        let contact = from_discovery(&response).unwrap();
         assert_eq!(contact.ip, IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)));
     }
 }
