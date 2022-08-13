@@ -1,9 +1,9 @@
-use crate::discovery::{Advertisement, DiscoveryQueue, DiscoveryResponse, Status};
-use crate::structures::DiscoveryRequest;
+use crate::discovery::{Advertisement, DiscoveryQueue};
 use rocket::serde::json::Json;
 use rocket::State;
 use std::net::SocketAddr;
 use std::time::SystemTime;
+use crate::structures::{DiscoveryResponse, Status, DiscoveryRequest};
 
 #[get("/")]
 fn home() -> String {
