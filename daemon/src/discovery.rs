@@ -1,9 +1,7 @@
 use super::reqwest;
 use super::{DiscoveryRequest, DiscoveryResponse};
-use crate::contact::Contact;
 use anyhow::Result;
 use log::debug;
-use serde_json::Result as ParseResult;
 
 #[derive(Clone)]
 pub struct DiscoveryServerConfig {
@@ -35,5 +33,5 @@ pub async fn discover(
     let res = client.post(url).json(&disc_request).send().await?;
     let text = res.text().await?;
 
-    Ok(serde_json::from_str(&text).unwrap())
+    Ok(serde_json::from_str(&text).expect("Failed to parse discovery response, server sent invalid data."))
 }

@@ -1,6 +1,6 @@
 use reqwest;
 
-use common::structures::{DiscoveryRequest, DiscoveryResponse, Status};
+use common::structures::{DiscoveryRequest, DiscoveryResponse};
 use discovery::{discover, discover_root, DiscoveryServerConfig};
 use std::net::{IpAddr, Ipv4Addr};
 
