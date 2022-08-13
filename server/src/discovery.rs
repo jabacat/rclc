@@ -14,4 +14,3 @@ pub struct Advertisement {
 pub struct DiscoveryQueue {
     pub queue: RwLock<HashMap<String, Advertisement>>,
 }
-
