@@ -1,4 +1,5 @@
 use std::net::IpAddr;
+use super::DiscoveryResponse;
 
 /// This structure is responsible for storing the contact information of a peer.
 /// It can be obtained either through peer discovery (REST API) or be manually imported
@@ -21,4 +22,15 @@ pub enum VerificationMethod {
     Github,
     Signature,
     Manual,
+}
+
+pub fn from_discovery(response: &DiscoveryResponse) -> Contact {
+    Contact {
+        prefered_name: None,
+        github_username: None,
+        verification_method: VerificationMethod::Unverified,
+        ip: response.discovery.as_ref().expect("Cannot parse a discovery response with no discovery request object").ip.expect("Cannot parse a discovery response with no discovery request ip"),
+        port: response.discovery.as_ref().expect("Cannot parse a discovery response with no discovery request object").port,
+        public_key: response.discovery.as_ref().expect("Cannot parse a discovery response with no discovery request object").public_key.clone(),
+    }
 }
