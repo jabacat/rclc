@@ -85,7 +85,7 @@ impl<'a> State<'a> {
         let mut poll = Poll::new().context("failed to start mio poll")?;
         let mut events = Events::with_capacity(1024);
 
-        // register the dtoc fifo to notify the poll whenever it it readable (whenever a new
+        // register the dtoc fifo to notify the poll whenever it is readable (whenever a new
         // message from the daemon is available to read).
         poll.registry()
             .register(
