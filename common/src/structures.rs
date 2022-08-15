@@ -32,7 +32,6 @@ pub struct DiscoveryResponse {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(crate = "rocket::serde")]
 pub struct InfoResponse {
     pub motd: String,
     pub version: String,
