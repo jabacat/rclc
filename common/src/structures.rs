@@ -30,3 +30,11 @@ pub struct DiscoveryResponse {
     pub discovery: Option<DiscoveryRequest>,
     pub message: String,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(crate = "rocket::serde")]
+pub struct InfoResponse {
+    pub motd: String,
+    pub version: String,
+    pub acceptingrequests: bool,
+}
