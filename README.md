@@ -8,7 +8,12 @@
 ![RCLC Structure with bg](https://user-images.githubusercontent.com/35516367/184010638-25389f58-7de6-4d69-bc0b-5467f6618ef8.png)
 
 ## Install
-The `./rclc/` dir needs to be created, so do the two FIFOs. Do this by running the following.
+The `~/.rclc/` dir needs to be created, so do the two FIFOs. Do this by running the following.
 ```sh
 ./scripts/install.sh
+```
+
+## Uninstall
+```sh
+./scripts/uninstall.sh
 ```
