@@ -11,6 +11,12 @@ use std::sync::RwLock;
 
 #[launch]
 pub fn rocket() -> _ {
+    // Normal env_logger::init will crash when rocket client is run in two different tests
+    match env_logger::try_init() {
+        Ok(..) => debug!("Logger started!"),
+        Err(_) => debug!("Logger already exists!"),
+    }
+
     rocket::build()
         .mount("/", get_routes())
         .manage(discovery::DiscoveryQueue {

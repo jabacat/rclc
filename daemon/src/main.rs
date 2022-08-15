@@ -1,7 +1,7 @@
 use reqwest;
 
-use common::structures::{DiscoveryRequest, DiscoveryResponse};
-use discovery::{discover, discover_root, DiscoveryServerConfig};
+use common::structures::{DiscoveryRequest, DiscoveryResponse, InfoResponse};
+use discovery::{discover, discover_info, discover_root, DiscoveryServerConfig};
 use std::net::{IpAddr, Ipv4Addr};
 
 pub mod contact;
@@ -23,6 +23,14 @@ async fn main() {
     match discover_root(disc_conf.clone()).await {
         Ok(a) => {
             println!("{a}")
+        }
+        Err(_) => eprintln!("Could not connect to server. Possible it does not exist yet."),
+    }
+
+    // Request the discovery server info
+    match discover_info(disc_conf.clone()).await {
+        Ok(a) => {
+            println!("{:?}", a)
         }
         Err(_) => eprintln!("Could not connect to server. Possible it does not exist yet."),
     }

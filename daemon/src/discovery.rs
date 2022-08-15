@@ -1,5 +1,5 @@
 use super::reqwest;
-use super::{DiscoveryRequest, DiscoveryResponse};
+use super::{DiscoveryRequest, DiscoveryResponse, InfoResponse};
 use anyhow::Result;
 use log::debug;
 
@@ -15,11 +15,14 @@ pub async fn discover_root(disc_conf: DiscoveryServerConfig) -> Result<String> {
     Ok(res.text().await?)
 }
 
-pub async fn discover_version(disc_conf: DiscoveryServerConfig) -> Result<String> {
+pub async fn discover_info(disc_conf: DiscoveryServerConfig) -> Result<InfoResponse> {
     let client = reqwest::Client::new();
-    let res = client.get(disc_conf.url + "/version").send().await?;
+    let res = client.get(disc_conf.url + "/info").send().await?;
 
-    Ok(res.text().await?)
+    let text = res.text().await?;
+
+    Ok(serde_json::from_str(&text)
+        .expect("Failed to parse discovery response, server sent invalid data."))
 }
 
 pub async fn discover(
