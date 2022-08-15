@@ -15,7 +15,6 @@ pub struct DiscoveryRequest {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(crate = "rocket::serde")]
 pub enum Status {
     Match,
     NoMatch,
@@ -23,7 +22,6 @@ pub enum Status {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(crate = "rocket::serde")]
 pub struct DiscoveryResponse {
     pub status: Status,
     pub error: Option<String>,
