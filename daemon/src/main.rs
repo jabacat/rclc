@@ -1,7 +1,7 @@
 use reqwest;
 
 use common::structures::{DiscoveryRequest, DiscoveryResponse, InfoResponse};
-use discovery::{discover, discover_root, DiscoveryServerConfig, discover_info};
+use discovery::{discover, discover_info, discover_root, DiscoveryServerConfig};
 use std::net::{IpAddr, Ipv4Addr};
 
 pub mod contact;

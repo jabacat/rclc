@@ -1,5 +1,5 @@
-use chrono::{DateTime, offset::Utc};
-use serde::{Serialize, Deserialize};
+use chrono::{offset::Utc, DateTime};
+use serde::{Deserialize, Serialize};
 
 use std::net::IpAddr;
 
