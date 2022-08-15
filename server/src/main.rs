@@ -11,6 +11,7 @@ use std::sync::RwLock;
 
 #[launch]
 pub fn rocket() -> _ {
+    env_logger::init();
     rocket::build()
         .mount("/", get_routes())
         .manage(discovery::DiscoveryQueue {

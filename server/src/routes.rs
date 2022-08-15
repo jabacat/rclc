@@ -4,6 +4,7 @@ use rocket::serde::json::Json;
 use rocket::State;
 use std::net::SocketAddr;
 use std::time::SystemTime;
+use log::debug;
 
 #[get("/")]
 fn home() -> String {
@@ -38,7 +39,7 @@ fn discover(
         created_at: SystemTime::now(),
         expires_in: 5000,
     };
-    println!("{:?}", &advert);
+    debug!("{:?}", &advert);
     discoveryqueue
         .queue
         .write()
@@ -53,7 +54,7 @@ fn discover(
     {
         Some(a) => {
             if discoveryrequest.requested_by == a.discovery.looking_for {
-                println!("It's a match! {:?}", a);
+                debug!("It's a match! {:?}", a);
                 Json(DiscoveryResponse {
                     status: Status::Match,
                     discovery: Some(a.discovery.clone()),
@@ -61,7 +62,7 @@ fn discover(
                     message: "It's a match!".to_string(),
                 })
             } else {
-                println!("No match! {:?}", a);
+                debug!("No match! {:?}", a);
                 Json(DiscoveryResponse {
                     status: Status::NoMatch,
                     discovery: None,
@@ -71,7 +72,7 @@ fn discover(
             }
         }
         None => {
-            println!("No advertisement found");
+            debug!("No advertisement found");
             Json(DiscoveryResponse {
                 status: Status::NoMatch,
                 discovery: None,
