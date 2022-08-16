@@ -1,5 +1,5 @@
 use anyhow::{bail, Context, Result};
-use args::{Opts, ChatOpts};
+use args::{ChatOpts, Opts};
 use common::client_daemon::{ClientToDaemonMsg, DaemonToClientMsg};
 use crossterm::{
     cursor,
@@ -9,16 +9,15 @@ use crossterm::{
     ExecutableCommand, QueueableCommand,
 };
 use mio::{unix::SourceFd, Events, Interest, Poll, Token};
-use structopt::StructOpt;
 use std::{
     fs::File,
     io::{self, Read, StdoutLock, Write},
     ops::ControlFlow,
     os::unix::prelude::AsRawFd,
-    panic,
-    thread,
+    panic, thread,
     time::Duration,
 };
+use structopt::StructOpt;
 
 mod args;
 
@@ -39,7 +38,7 @@ struct State<'a> {
 
 impl<'a> State<'a> {
     fn new(opts: ChatOpts) -> Result<Self> {
-        let mut stdout = io::stdout().lock();
+        let stdout = io::stdout().lock();
         if !stdout.is_tty() {
             bail!("stdout is not a tty");
         }
