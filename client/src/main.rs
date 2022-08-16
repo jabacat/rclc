@@ -1,5 +1,5 @@
 use anyhow::{bail, Context, Result};
-use args::Opts;
+use args::{Opts, ChatOpts};
 use common::client_daemon::{ClientToDaemonMsg, DaemonToClientMsg};
 use crossterm::{
     cursor,
@@ -9,11 +9,14 @@ use crossterm::{
     ExecutableCommand, QueueableCommand,
 };
 use mio::{unix::SourceFd, Events, Interest, Poll, Token};
+use structopt::StructOpt;
 use std::{
     fs::File,
     io::{self, Read, StdoutLock, Write},
     ops::ControlFlow,
     os::unix::prelude::AsRawFd,
+    panic,
+    thread,
     time::Duration,
 };
 
@@ -35,7 +38,7 @@ struct State<'a> {
 }
 
 impl<'a> State<'a> {
-    fn new() -> Result<Self> {
+    fn new(opts: ChatOpts) -> Result<Self> {
         let mut stdout = io::stdout().lock();
         if !stdout.is_tty() {
             bail!("stdout is not a tty");
@@ -43,33 +46,7 @@ impl<'a> State<'a> {
 
         terminal::enable_raw_mode().context("couldn't enable raw mode")?;
 
-        let home_dir = dirs::home_dir().context("couldn't get home directory")?;
-
-        print!("waiting for daemon connection...");
-        stdout.flush()?;
-        // aquire a write handle on the ctod fifo
-        // this blocks the client until the daemon opens the file to read
-        let ctodbuf = File::options()
-            .write(true)
-            .open(home_dir.join(".rclc/ctodbuf"))
-            .context("couldn't open client->daemon fifo")?;
-
-        // clear waiting message
-        stdout
-            .queue(terminal::Clear(ClearType::CurrentLine))?
-            .execute(cursor::MoveToColumn(0))?;
-
-        print!("waiting for daemon response...");
-        stdout.flush()?;
-        // aquire a read handle on the dtoc file
-        // this blocks until the daemon opens the file to write
-        let dtocbuf = File::open(home_dir.join(".rclc/dtocbuf"))
-            .context("couldn't open daemon->client fifo")?;
-
-        // clear waiting message
-        stdout
-            .queue(terminal::Clear(ClearType::CurrentLine))?
-            .execute(cursor::MoveToColumn(0))?;
+        let (ctodbuf, dtocbuf) = Self::try_get_fifos(&opts)?;
 
         Ok(Self {
             stdout,
@@ -77,6 +54,35 @@ impl<'a> State<'a> {
             dtocbuf,
             ctodbuf,
         })
+    }
+
+    fn try_get_fifos(opts: &ChatOpts) -> Result<(File, File)> {
+        let thread = thread::spawn(|| {
+            let home_dir = dirs::home_dir().context("couldn't get home directory")?;
+
+            let ctodbuf = File::options()
+                .write(true)
+                .open(home_dir.join(".rclc/ctodbuf"))
+                .context("couldn't open client->daemon fifo")?;
+
+            let dtocbuf = File::open(home_dir.join(".rclc/dtocbuf"))
+                .context("couldn't open daemon->client fifo")?;
+
+            Ok((ctodbuf, dtocbuf))
+        });
+
+        if !opts.no_timeout {
+            thread::sleep(Duration::from_millis(10));
+        }
+
+        if opts.no_timeout || thread.is_finished() {
+            match thread.join() {
+                Ok(o) => o,
+                Err(e) => panic::resume_unwind(e),
+            }
+        } else {
+            bail!("daemon is not running (10 ms timeout reached)");
+        }
     }
 
     /// start the event loop
@@ -213,8 +219,8 @@ impl<'a> State<'a> {
     }
 }
 
-fn chat() -> Result<()> {
-    let mut state = State::new()?;
+fn chat(opts: ChatOpts) -> Result<()> {
+    let mut state = State::new(opts)?;
     state.start()?;
 
     Ok(())
@@ -236,8 +242,8 @@ fn cleanup() {
 }
 
 fn go() -> Result<()> {
-    match Opts::get() {
-        Opts::Chat => chat(),
+    match Opts::from_args() {
+        Opts::Chat(chatopts) => chat(chatopts),
     }
 }
 
