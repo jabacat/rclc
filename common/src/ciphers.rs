@@ -2,17 +2,33 @@ pub fn list_ciphers() -> String {
     "caeser, shift".to_string()
 }
 
-pub fn caeser(msg: &str) -> &str {
-    shift(3, msg)
+pub struct Encryption {}
+
+pub trait Encrypt {
+    fn caeser(&self, msg: String) -> String;
+    fn shift(&self, k: u32, msg: String) -> String;
 }
 
-pub fn shift(k: i16, msg: &str) -> &str {
-    msg
+impl Encrypt for Encryption {
+    fn caeser(&self, msg: String) -> String {
+        self.shift(3, msg)
+    }
+
+    fn shift(&self, k: u32, msg: String) -> String {
+        let mut result = String::new();
+        for c in msg.chars() {
+            let r = if c.is_uppercase() { 65 } else { 97 };
+            result.push(char::from_u32((c as u32 + k - r) % 26 + r).expect("Bounds error"));
+        }
+
+        result
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
 
     #[test]
     fn list_ciphers_test() {
@@ -21,20 +37,23 @@ mod tests {
 
     #[test]
     fn caeser_test() {
-        assert_eq!(caeser("cat"), "zxq");
-        assert_eq!(caeser("hello"), "eblln");
-        assert_eq!(caeser("rclc"), "oziz");
-        assert_eq!(caeser("RCLC"), "OZIZ");
+        let ec = Encryption {};
+        assert_eq!(ec.caeser("abc".to_string()), "def");
+        assert_eq!(ec.caeser("cat".to_string()), "fdw");
+        assert_eq!(ec.caeser("hello".to_string()), "khoor");
+        assert_eq!(ec.caeser("rclc".to_string()), "ufof");
+        assert_eq!(ec.caeser("RCLC".to_string()), "UFOF");
     }
 
     #[test]
     fn shift_test() {
-        assert_eq!(shift(3, "cat"), "zxq");
-        assert_eq!(shift(3, "hello"), "eblln");
-        assert_eq!(shift(3, "rclc"), "oziz");
-        assert_eq!(shift(3, "RCLC"), "OZIZ");
-        assert_eq!(shift(4, "rclc"), "nyhy");
-        assert_eq!(shift(29, "rclc"), "oziz");
-        assert_eq!(shift(29, "RCLC"), "OZIZ");
+        let ec = Encryption {};
+        assert_eq!(ec.shift(3, "cat".to_string()), "fdw");
+        assert_eq!(ec.shift(3, "hello".to_string()), "khoor");
+        assert_eq!(ec.shift(3, "rclc".to_string()), "ufof");
+        assert_eq!(ec.shift(3, "RCLC".to_string()), "UFOF");
+        assert_eq!(ec.shift(4, "rclc".to_string()), "vgpg");
+        assert_eq!(ec.shift(29, "rclc".to_string()), "ufof");
+        assert_eq!(ec.shift(29, "RCLC".to_string()), "UFOF");
     }
 }
