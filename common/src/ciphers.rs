@@ -1,16 +1,16 @@
 pub fn list_ciphers() -> String {
-    "caeser, shift".to_string()
+    "caesar, shift".to_string()
 }
 
 pub struct Encryption {}
 
 pub trait Encrypt {
-    fn caeser(&self, msg: String) -> String;
+    fn caesar(&self, msg: String) -> String;
     fn shift(&self, k: u32, msg: String) -> String;
 }
 
 impl Encrypt for Encryption {
-    fn caeser(&self, msg: String) -> String {
+    fn caesar(&self, msg: String) -> String {
         self.shift(3, msg)
     }
 
@@ -31,17 +31,17 @@ mod tests {
 
     #[test]
     fn list_ciphers_test() {
-        assert_eq!(list_ciphers(), "caeser, shift");
+        assert_eq!(list_ciphers(), "caesar, shift");
     }
 
     #[test]
-    fn caeser_test() {
+    fn caesar_test() {
         let ec = Encryption {};
-        assert_eq!(ec.caeser("abc".to_string()), "def");
-        assert_eq!(ec.caeser("cat".to_string()), "fdw");
-        assert_eq!(ec.caeser("hello".to_string()), "khoor");
-        assert_eq!(ec.caeser("rclc".to_string()), "ufof");
-        assert_eq!(ec.caeser("RCLC".to_string()), "UFOF");
+        assert_eq!(ec.caesar("abc".to_string()), "def");
+        assert_eq!(ec.caesar("cat".to_string()), "fdw");
+        assert_eq!(ec.caesar("hello".to_string()), "khoor");
+        assert_eq!(ec.caesar("rclc".to_string()), "ufof");
+        assert_eq!(ec.caesar("RCLC".to_string()), "UFOF");
     }
 
     #[test]
