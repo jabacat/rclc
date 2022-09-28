@@ -73,3 +73,24 @@ jobs:
       run: |
         cd ./client
         cargo fmt --check
+
+  common:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: Swatinem/rust-cache@v1
+    - name: Build
+      run: |
+        cd ./common
+        cargo build --verbose
+        
+    - name: Test
+      run: |
+        cd ./common
+        cargo test --verbose
+        
+    - name: Format
+      run: |
+        cd ./common
+        cargo fmt --check
