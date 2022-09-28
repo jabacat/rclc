@@ -3,7 +3,7 @@ pub fn list_ciphers() -> String {
 }
 
 pub fn caeser(msg: &str) -> &str {
-    msg
+    shift(3, msg)
 }
 
 pub fn shift(k: i16, msg: &str) -> &str {
