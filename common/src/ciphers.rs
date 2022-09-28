@@ -1,5 +1,13 @@
 pub fn list_ciphers() -> String {
-    "None".to_string()
+    "caeser, shift".to_string()
+}
+
+pub fn caeser(msg: &str) -> &str {
+    msg
+}
+
+pub fn shift(k: i16, msg: &str) -> &str {
+    msg
 }
 
 #[cfg(test)]
@@ -8,7 +16,7 @@ mod tests {
 
     #[test]
     fn list_ciphers_test() {
-        assert_eq!(list_ciphers(), "caeser");
+        assert_eq!(list_ciphers(), "caeser, shift");
     }
 
     #[test]
