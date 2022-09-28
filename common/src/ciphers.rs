@@ -29,7 +29,6 @@ impl Encrypt for Encryption {
 mod tests {
     use super::*;
 
-
     #[test]
     fn list_ciphers_test() {
         assert_eq!(list_ciphers(), "caeser, shift");
