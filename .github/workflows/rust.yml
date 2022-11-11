@@ -15,14 +15,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    
-    - name: Install rust
-      run: |
-        rustup toolchain install stable --profile minimal
-        rustup component add rustfmt
-    
-    - uses: Swatinem/rust-cache@v2
-    
+    - uses: Swatinem/rust-cache@v1
     - name: Install dependencies with apt
       run: |
         sudo apt update
@@ -70,14 +63,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    
-    - name: Install rust
-      run: |
-        rustup toolchain install stable --profile minimal
-        rustup component add rustfmt
-
-    - uses: Swatinem/rust-cache@v2
-
+    - uses: Swatinem/rust-cache@v1
     - name: Build
       run: |
         cd ./client
@@ -98,7 +84,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - uses: Swatinem/rust-cache@v2
+    - uses: Swatinem/rust-cache@v1
     - name: Build
       run: |
         cd ./common
