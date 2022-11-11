@@ -1,0 +1,104 @@
+syntax = "proto3";
+package clientdaemon;
+
+import "google/protobuf/empty.proto";
+
+// Service for talking between the client and the daemon
+// TODO: Come up with a better name
+service ClientDaemon {
+    // Get the chat history with some user
+    rpc GetChatHistory(ChatHistoryRequest) returns (ChatHistoryResponse);
+
+    // Subscribe to events emitted by the daemon
+    rpc SubscribeToEvents(google.protobuf.Empty) returns (stream Event);
+
+    // Send a message
+    rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
+    // Edit a message
+    rpc EditMessage(EditMessageRequest) returns (EditMessageResponse);
+    // Delete a message
+    rpc DeleteMessage(DeleteMessageRequest) returns (DeleteMessageResponse);
+}
+
+// request to get chat history
+message ChatHistoryRequest {
+    // user to get chat history with
+    string username = 1;
+    // id of last message received
+    string last_id = 2;
+}
+
+// chat history with a user
+message ChatHistoryResponse {
+    // all of the messages
+    repeated Message messages = 1;
+}
+
+
+// An event emitted by the daemon
+message Event {
+    // New or edited message
+    message MessageEvent {
+        // edited message
+        bool edit = 1;
+        // who sent it
+        string sender = 2;
+        // the message
+        Message message = 3;
+    }
+
+    // Deleted message
+    message MessageDeleteEvent {
+        // who
+        string sender = 1;
+        // message id
+        string id = 2;
+    }
+
+    // Other user request to talk
+    message ChatRequestEvent {
+        // user name of the user
+        string username = 1;
+    }
+
+    oneof event {
+        MessageEvent message = 1;
+        MessageDeleteEvent message_delete = 2;
+        ChatRequestEvent chat_request = 3;
+    }
+}
+
+
+message SendMessageRequest {
+    string recipient = 1;
+    Message message = 2;
+}
+
+// Currently blank, just here for the future
+message SendMessageResponse {}
+
+
+message EditMessageRequest {
+    string recipient = 1;
+    Message message = 2;
+}
+
+// Currently blank, just here for the future
+message EditMessageResponse {}
+
+message DeleteMessageRequest {
+    string recipient = 1;
+    Message message = 2;
+}
+
+// Currently blank, just here for the future
+message DeleteMessageResponse {}
+
+message Message {
+    string id = 1;
+    uint64 timestamp = 2;
+    string user = 3;
+    string content = 4;
+    // TODO: figure out how to do attachments
+    // repeated bytes attachments = 5;
+}

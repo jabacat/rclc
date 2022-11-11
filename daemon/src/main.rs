@@ -1,15 +1,18 @@
 use reqwest;
 
+use client_server::client_daemon::client_daemon_server::ClientDaemonServer;
 use common::structures::{DiscoveryRequest, DiscoveryResponse, InfoResponse};
 use discovery::{discover, discover_info, discover_root, DiscoveryServerConfig};
 use std::net::{IpAddr, Ipv4Addr};
+use tonic::transport::Server;
 
+pub mod client_server;
 pub mod contact;
 pub mod discovery;
 pub mod notif;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
     println!("Hello, world!");
 
@@ -68,4 +71,13 @@ async fn main() {
         }
         Err(_) => eprintln!("Could not connect to server. Possible it does not exist yet."),
     }
+
+    // tonic gRPC server for the communication with the client
+    let addr = "0.0.0.0:5768".parse()?;
+    let cd_svc = client_server::ClientDaemonService {};
+    let cd_srv = ClientDaemonServer::new(cd_svc);
+    println!("Client gRPC server on {}", addr);
+    Server::builder().add_service(cd_srv).serve(addr).await?;
+
+    Ok(())
 }
