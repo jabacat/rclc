@@ -1,0 +1,51 @@
+name: Build and test client
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "client/"
+      - "common/"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - "client/"
+      - "common/"
+
+env:
+  CARGO_TERM_COLOR: always
+  DEBIAN_FRONTEND: noninteractive
+
+defaults:
+  run:
+    working_directory: client
+
+jobs:
+  build-client:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: dtolnay/rust-toolchain@stable
+      with:
+        components: clippy, rustfmt
+
+    - uses: Swatinem/rust-cache@v2
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y protobuf-compiler libprotobuf-dev
+
+    - name: Build
+      run: |
+        cargo build --verbose
+        
+    - name: Test
+      run: |
+        cargo test --verbose
+        
+    - name: Format
+      run: |
+        cargo fmt --check
