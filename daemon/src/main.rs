@@ -2,16 +2,24 @@ use reqwest;
 
 use common::structures::{DiscoveryRequest, DiscoveryResponse, InfoResponse};
 use discovery::{discover, discover_info, discover_root, DiscoveryServerConfig};
-use std::net::{IpAddr, Ipv4Addr};
+use std::{
+    net::{IpAddr, Ipv4Addr},
+    thread,
+    time::Duration,
+};
+
+use crate::net::listen;
 
 pub mod contact;
 pub mod discovery;
+pub mod net;
 pub mod notif;
 
 #[tokio::main]
 async fn main() {
     env_logger::init();
     println!("Hello, world!");
+    listen::listen("/tmp/rclc.sock");
 
     notif::notif("RCLC", "The RCLC daemon has been launched!");
 
@@ -67,5 +75,9 @@ async fn main() {
             println!("{:?}", a);
         }
         Err(_) => eprintln!("Could not connect to server. Possible it does not exist yet."),
+    }
+
+    loop {
+        thread::sleep(Duration::from_millis(5000));
     }
 }
