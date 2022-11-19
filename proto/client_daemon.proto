@@ -9,6 +9,9 @@ service ClientDaemon {
     // Get the chat history with some user
     rpc GetChatHistory(ChatHistoryRequest) returns (ChatHistoryResponse);
 
+    // Get the UI state on startup
+    rpc GetUIState(google.protobuf.Empty) returns (UIStateResponse);
+
     // Subscribe to events emitted by the daemon
     rpc SubscribeToEvents(google.protobuf.Empty) returns (stream Event);
 
@@ -23,15 +26,20 @@ service ClientDaemon {
 // request to get chat history
 message ChatHistoryRequest {
     // user to get chat history with
-    string username = 1;
+    int64 user_id = 1;
     // id of last message received
-    string last_id = 2;
+    int64 last_id = 2;
 }
 
 // chat history with a user
 message ChatHistoryResponse {
     // all of the messages
     repeated Message messages = 1;
+}
+
+
+message UIStateResponse {
+    repeated int64 conversations = 1;
 }
 
 
@@ -42,7 +50,7 @@ message Event {
         // edited message
         bool edit = 1;
         // who sent it
-        string sender = 2;
+        int64 sender = 2;
         // the message
         Message message = 3;
     }
@@ -50,7 +58,7 @@ message Event {
     // Deleted message
     message MessageDeleteEvent {
         // who
-        string sender = 1;
+        int64 sender = 1;
         // message id
         string id = 2;
     }
@@ -59,6 +67,7 @@ message Event {
     message ChatRequestEvent {
         // user name of the user
         string username = 1;
+        string addr = 2;
     }
 
     oneof event {
@@ -69,17 +78,25 @@ message Event {
 }
 
 
+// Request to send a message
 message SendMessageRequest {
-    string recipient = 1;
-    Message message = 2;
+    // user id of recipient
+    int64 recipient = 1;
+    
+    // content of the message
+    string content = 2;
 }
 
-// Currently blank, just here for the future
-message SendMessageResponse {}
+// Response to client after sending message
+message SendMessageResponse {
+    // id assigned to the message
+    int64 id = 1;
+}
 
 
 message EditMessageRequest {
-    string recipient = 1;
+    // user id of recipient
+    int64 recipient = 1;
     Message message = 2;
 }
 
@@ -87,7 +104,8 @@ message EditMessageRequest {
 message EditMessageResponse {}
 
 message DeleteMessageRequest {
-    string recipient = 1;
+    // user id of recipient
+    int64 recipient = 1;
     Message message = 2;
 }
 
@@ -95,9 +113,9 @@ message DeleteMessageRequest {
 message DeleteMessageResponse {}
 
 message Message {
-    string id = 1;
+    int64 id = 1;
     uint64 timestamp = 2;
-    string user = 3;
+    int64 user = 3;
     string content = 4;
     // TODO: figure out how to do attachments
     // repeated bytes attachments = 5;

@@ -1,21 +1,29 @@
 use anyhow::{bail, Context, Result};
 use args::Opts;
-use common::client_daemon::{ClientToDaemonMsg, DaemonToClientMsg};
+use client_daemon::{
+    client_daemon_client::ClientDaemonClient,
+    event::Event::{ChatRequest, Message, MessageDelete},
+    SendMessageRequest,
+};
+//use common::client_daemon::{ClientToDaemonMsg, DaemonToClientMsg};
+use crossterm::event::EventStream;
 use crossterm::{
     cursor,
-    event::{self, Event, KeyCode, KeyEvent, KeyModifiers},
+    event::{Event, KeyCode, KeyEvent, KeyModifiers},
     terminal::{self, ClearType},
     tty::IsTty,
     ExecutableCommand, QueueableCommand,
 };
-use mio::{unix::SourceFd, Events, Interest, Poll, Token};
 use std::{
-    fs::File,
-    io::{self, Read, StdoutLock, Write},
+    io::{self, StdoutLock, Write},
     ops::ControlFlow,
-    os::unix::prelude::AsRawFd,
-    time::Duration,
 };
+use tokio_stream::StreamExt;
+use tonic::transport::Channel;
+
+pub mod client_daemon {
+    tonic::include_proto!("clientdaemon");
+}
 
 mod args;
 
@@ -27,15 +35,18 @@ struct State<'a> {
     /// the current text in the input field
     input: String,
 
-    /// a handle to the `~/.rclc/dtocbuf` fifo in read-only mode
+    daemon: ClientDaemonClient<Channel>,
+
+    event_stream: EventStream,
+    /*/// a handle to the `~/.rclc/dtocbuf` fifo in read-only mode
     dtocbuf: File,
 
     /// a handle to the `~/.rclc/ctodbuf` fifo in write-only mode
-    ctodbuf: File,
+    ctodbuf: File,*/
 }
 
 impl<'a> State<'a> {
-    fn new() -> Result<Self> {
+    async fn new() -> Result<State<'a>> {
         let mut stdout = io::stdout().lock();
         if !stdout.is_tty() {
             bail!("stdout is not a tty");
@@ -43,11 +54,11 @@ impl<'a> State<'a> {
 
         terminal::enable_raw_mode().context("couldn't enable raw mode")?;
 
-        let home_dir = dirs::home_dir().context("couldn't get home directory")?;
+        //let home_dir = dirs::home_dir().context("couldn't get home directory")?;
 
         print!("waiting for daemon connection...");
         stdout.flush()?;
-        // aquire a write handle on the ctod fifo
+        /*// aquire a write handle on the ctod fifo
         // this blocks the client until the daemon opens the file to read
         let ctodbuf = File::options()
             .write(true)
@@ -64,28 +75,30 @@ impl<'a> State<'a> {
         // aquire a read handle on the dtoc file
         // this blocks until the daemon opens the file to write
         let dtocbuf = File::open(home_dir.join(".rclc/dtocbuf"))
-            .context("couldn't open daemon->client fifo")?;
+            .context("couldn't open daemon->client fifo")?;*/
 
         // clear waiting message
         stdout
             .queue(terminal::Clear(ClearType::CurrentLine))?
             .execute(cursor::MoveToColumn(0))?;
 
+        let client = ClientDaemonClient::connect("http://0.0.0.0:5768").await?;
+
         Ok(Self {
             stdout,
             input: String::new(),
-            dtocbuf,
-            ctodbuf,
+            daemon: client,
+            event_stream: EventStream::new(),
         })
     }
 
     /// start the event loop
-    fn start(&mut self) -> Result<()> {
+    async fn start(&mut self) -> Result<()> {
         // a mio poll lets you monitor for readiness events from multiple sources.
-        let mut poll = Poll::new().context("failed to start mio poll")?;
-        let mut events = Events::with_capacity(1024);
+        /*let poll = Poll::new().context("failed to start mio poll")?;
+        let events = Events::with_capacity(1024);*/
 
-        // register the dtoc fifo to notify the poll whenever it is readable (whenever a new
+        /*// register the dtoc fifo to notify the poll whenever it is readable (whenever a new
         // message from the daemon is available to read).
         poll.registry()
             .register(
@@ -93,23 +106,85 @@ impl<'a> State<'a> {
                 Token(0),
                 Interest::READABLE,
             )
-            .context("could not register daemon->client fifo with mio poll")?;
+            .context("could not register daemon->client fifo with mio poll")?;*/
 
         // register stdin to notify the poll whenever it is readalbe (whenever the user presses
         // a key).
-        poll.registry()
+        /*poll.registry()
             .register(
                 &mut SourceFd(&io::stdin().as_raw_fd()),
                 Token(1),
                 Interest::READABLE,
             )
-            .context("could not register stdin with mio poll")?;
+            .context("could not register stdin with mio poll")?;*/
+
+        let mut stream = self.daemon.subscribe_to_events(()).await?.into_inner();
+        let (dtx, mut drx) = tokio::sync::mpsc::channel(100);
+        tokio::spawn(async move {
+            while let Some(maybe_event) = stream.next().await {
+                match maybe_event {
+                    Ok(event) => dtx.send(event).await.unwrap(),
+                    Err(e) => {
+                        eprintln!("error: {}", e);
+                        break;
+                    }
+                }
+            }
+        });
 
         print!("{}", PROMPT);
         self.stdout.flush()?;
 
+        let ui_state = self.daemon.get_ui_state(()).await?.into_inner();
+        self.print_upwards(|| {
+            bunt::println!("{$green}[+] OK{/$} {$yellow}Got initial UI state from daemon:{/$} {:?}", ui_state);
+            Ok(())
+        })?;
+
         'evt_loop: loop {
-            // block until the next poll event happens
+            tokio::select! {
+                event = self.event_stream.next() => {
+                    match event {
+                        Some(rst) => {
+                            match rst {
+                                Ok(evt) => match self.handle_term_evt(evt).await? {
+                                    ControlFlow::Continue(()) => (),
+                                    ControlFlow::Break(()) => break 'evt_loop,
+                                },
+                                Err(poo) => panic!("poo occurred: {poo}"),
+                            }
+                        }
+                        None => panic!("I can't program")
+                    }
+                }
+                opt = drx.recv() => match opt {
+                    Some(msg) => match msg.event {
+                        Some(evt) => match evt {
+                            Message(mevt) => {
+                                bunt::print!("{$green}[+] OK {/$}{$yellow}Message event:{/$} {:?}\n\raw", mevt);
+                                //print!("[+ok] MESSAGE event: {:?}", mevt);
+                            },
+                            MessageDelete(mdevt) => {
+                                bunt::print!("{$green}[+] OK {/$}{$yellow}Message delete event:{/$} {:?}\n\r", mdevt);
+                                //println!("DELETED event: {:?}", mdevt);
+                            },
+                            ChatRequest(crevt) => {
+                                bunt::print!("{$green}[+] OK {/$}{$yellow}Scammer Likely:{/$} {:?}\n\r", crevt);
+                                //println!("Scammer Likely: {:?}", crevt);
+                            }
+                        }
+                        None => self.print_upwards(|| {
+                            bunt::eprintln!("{$red}[-] XX Blank message from daemon{/$}");
+                            Ok(())
+                        })?
+                    }
+                    None => self.print_upwards(|| {
+                        bunt::eprintln!("{$red}[-] XX Connection to daemon closed{/$}");
+                        Ok(())
+                    })?
+                }
+            }
+            /*// block until the next poll event happens
             poll.poll(&mut events, None)
                 .context("failed to poll mio poll")?;
 
@@ -122,12 +197,13 @@ impl<'a> State<'a> {
                     },
                     _ => unreachable!(),
                 }
-            }
+            }*/
 
-            // temporary fix for initial buffering problem
+            // XXX: hopefully this code change fixes this issue anyways
+            /*// temporary fix for initial buffering problem
             while event::poll(Duration::ZERO)? {
                 self.handle_term_evt()?;
-            }
+            }*/
 
             self.stdout.flush()?;
         }
@@ -149,7 +225,7 @@ impl<'a> State<'a> {
         Ok(())
     }
 
-    fn send_fifo_msg(&mut self, msg: &ClientToDaemonMsg) -> Result<()> {
+    /*fn send_fifo_msg(&mut self, msg: &ClientToDaemonMsg) -> Result<()> {
         rmp_serde::encode::write(&mut self.ctodbuf, &msg)
             .with_context(|| format!("couldn't write message {msg:?} to fifo"))
     }
@@ -168,17 +244,17 @@ impl<'a> State<'a> {
         }
 
         Ok(())
-    }
+    }*/
 
-    fn handle_term_evt(&mut self) -> Result<ControlFlow<()>> {
-        let event = event::read().context("couldn't read next terminal event")?;
+    async fn handle_term_evt(&mut self, event: Event) -> Result<ControlFlow<()>> {
+        //let event = event::read().context("couldn't read next terminal event")?;
         match event {
-            Event::Key(kev) => self.handle_kev(kev),
+            Event::Key(kev) => self.handle_kev(kev).await,
             _ => Ok(ControlFlow::Continue(())),
         }
     }
 
-    fn handle_kev(&mut self, kev: KeyEvent) -> Result<ControlFlow<()>> {
+    async fn handle_kev(&mut self, kev: KeyEvent) -> Result<ControlFlow<()>> {
         match kev.code {
             KeyCode::Char('c') if kev.modifiers == KeyModifiers::CONTROL => {
                 // notify the event loop to break
@@ -195,7 +271,11 @@ impl<'a> State<'a> {
                     return Ok(ControlFlow::Continue(()));
                 }
 
-                self.send_fifo_msg(&ClientToDaemonMsg::Send(self.input.clone()))?;
+                self.daemon.send_message(SendMessageRequest {
+                    recipient: 0,
+                    content: self.input.clone(),
+                }).await?;
+                //self.send_fifo_msg(&ClientToDaemonMsg::Send(self.input.clone()))?;
                 self.input.clear();
                 self.stdout
                     .queue(terminal::Clear(ClearType::CurrentLine))?
@@ -213,9 +293,9 @@ impl<'a> State<'a> {
     }
 }
 
-fn chat() -> Result<()> {
-    let mut state = State::new()?;
-    state.start()?;
+async fn chat() -> Result<()> {
+    let mut state = State::new().await?;
+    state.start().await?;
 
     Ok(())
 }
@@ -235,15 +315,16 @@ fn cleanup() {
     }
 }
 
-fn go() -> Result<()> {
+async fn go() -> Result<()> {
     match Opts::get() {
-        Opts::Chat => chat(),
+        Opts::Chat => chat().await,
     }
 }
 
-fn main() {
-    if let Err(e) = go() {
+#[tokio::main]
+async fn main() {
+    if let Err(e) = go().await {
         cleanup();
         println!("rclc client error: {e:?}");
-    }
+    };
 }

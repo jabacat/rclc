@@ -2,8 +2,11 @@ use client_daemon::client_daemon_server::ClientDaemon;
 use client_daemon::{
     ChatHistoryRequest, ChatHistoryResponse, DeleteMessageRequest, DeleteMessageResponse,
     EditMessageRequest, EditMessageResponse, Event, SendMessageRequest, SendMessageResponse,
+    UiStateResponse,
 };
-use tokio_stream::wrappers::ReceiverStream;
+use std::pin::Pin;
+use tokio_stream::wrappers::BroadcastStream;
+use tokio_stream::{Stream, StreamExt};
 use tonic::{Request, Response, Status};
 
 pub mod client_daemon {
@@ -12,7 +15,9 @@ pub mod client_daemon {
 
 #[derive(Debug)]
 // FIXME: name this something better
-pub struct ClientDaemonService {}
+pub struct ClientDaemonService {
+    pub ev_stream: tokio::sync::broadcast::Sender<Result<Event, Status>>,
+}
 
 #[tonic::async_trait]
 impl ClientDaemon for ClientDaemonService {
@@ -26,7 +31,18 @@ impl ClientDaemon for ClientDaemonService {
         return Ok(Response::new(ChatHistoryResponse::default()));
     }
 
-    type SubscribeToEventsStream = ReceiverStream<Result<Event, Status>>;
+    async fn get_ui_state(
+        &self,
+        request: Request<()>,
+    ) -> Result<Response<UiStateResponse>, Status> {
+        println!("Got UI state request: {:?}", request);
+
+        // TODO: implement
+        Ok(Response::new(UiStateResponse::default()))
+    }
+
+    type SubscribeToEventsStream =
+        Pin<Box<dyn Stream<Item = Result<Event, Status>> + Send + Sync + 'static>>;
 
     async fn subscribe_to_events(
         &self,
@@ -34,10 +50,13 @@ impl ClientDaemon for ClientDaemonService {
     ) -> Result<Response<Self::SubscribeToEventsStream>, Status> {
         println!("Received subscribe to events request: {:?}", request);
         // FIXME: Implement this
-        let (_tx, rx) = tokio::sync::mpsc::channel(4);
+        //let (_tx, rx) = tokio::sync::mpsc::channel(4);
 
         // TODO: send events as they come
-        return Ok(Response::new(ReceiverStream::new(rx)));
+        // FIXME: Someone needs to review this code, I just turned on Copilot and let it write this, including this comment
+        return Ok(Response::new(Box::pin(
+            BroadcastStream::new(self.ev_stream.subscribe()).filter_map(|x| x.ok()),
+        )));
     }
 
     async fn send_message(
