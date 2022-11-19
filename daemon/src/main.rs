@@ -96,7 +96,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         timestamp: 1,
                     }),
                 })),
-            })).unwrap();
+            }))
+            .unwrap();
         }
     });
     let cd_srv = ClientDaemonServer::new(cd_svc);
