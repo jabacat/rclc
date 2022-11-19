@@ -5,7 +5,6 @@ use client_daemon::{
     event::Event::{ChatRequest, Message, MessageDelete},
     SendMessageRequest,
 };
-//use common::client_daemon::{ClientToDaemonMsg, DaemonToClientMsg};
 use crossterm::event::EventStream;
 use crossterm::{
     cursor,
@@ -38,11 +37,6 @@ struct State<'a> {
     daemon: ClientDaemonClient<Channel>,
 
     event_stream: EventStream,
-    /*/// a handle to the `~/.rclc/dtocbuf` fifo in read-only mode
-    dtocbuf: File,
-
-    /// a handle to the `~/.rclc/ctodbuf` fifo in write-only mode
-    ctodbuf: File,*/
 }
 
 impl<'a> State<'a> {
@@ -54,70 +48,24 @@ impl<'a> State<'a> {
 
         terminal::enable_raw_mode().context("couldn't enable raw mode")?;
 
-        //let home_dir = dirs::home_dir().context("couldn't get home directory")?;
-
         print!("waiting for daemon connection...");
+        // FIXME: wait for address to actually become available before connecting
+        let daemon = ClientDaemonClient::connect("http://0.0.0.0:5768").await?;
         stdout.flush()?;
-        /*// aquire a write handle on the ctod fifo
-        // this blocks the client until the daemon opens the file to read
-        let ctodbuf = File::options()
-            .write(true)
-            .open(home_dir.join(".rclc/ctodbuf"))
-            .context("couldn't open client->daemon fifo")?;
-
-        // clear waiting message
         stdout
             .queue(terminal::Clear(ClearType::CurrentLine))?
             .execute(cursor::MoveToColumn(0))?;
-
-        print!("waiting for daemon response...");
-        stdout.flush()?;
-        // aquire a read handle on the dtoc file
-        // this blocks until the daemon opens the file to write
-        let dtocbuf = File::open(home_dir.join(".rclc/dtocbuf"))
-            .context("couldn't open daemon->client fifo")?;*/
-
-        // clear waiting message
-        stdout
-            .queue(terminal::Clear(ClearType::CurrentLine))?
-            .execute(cursor::MoveToColumn(0))?;
-
-        let client = ClientDaemonClient::connect("http://0.0.0.0:5768").await?;
 
         Ok(Self {
             stdout,
             input: String::new(),
-            daemon: client,
+            daemon,
             event_stream: EventStream::new(),
         })
     }
 
     /// start the event loop
     async fn start(&mut self) -> Result<()> {
-        // a mio poll lets you monitor for readiness events from multiple sources.
-        /*let poll = Poll::new().context("failed to start mio poll")?;
-        let events = Events::with_capacity(1024);*/
-
-        /*// register the dtoc fifo to notify the poll whenever it is readable (whenever a new
-        // message from the daemon is available to read).
-        poll.registry()
-            .register(
-                &mut SourceFd(&self.dtocbuf.as_raw_fd()),
-                Token(0),
-                Interest::READABLE,
-            )
-            .context("could not register daemon->client fifo with mio poll")?;*/
-
-        // register stdin to notify the poll whenever it is readalbe (whenever the user presses
-        // a key).
-        /*poll.registry()
-            .register(
-                &mut SourceFd(&io::stdin().as_raw_fd()),
-                Token(1),
-                Interest::READABLE,
-            )
-            .context("could not register stdin with mio poll")?;*/
-
         let mut stream = self.daemon.subscribe_to_events(()).await?.into_inner();
         let (dtx, mut drx) = tokio::sync::mpsc::channel(100);
         tokio::spawn(async move {
@@ -137,7 +85,10 @@ impl<'a> State<'a> {
 
         let ui_state = self.daemon.get_ui_state(()).await?.into_inner();
         self.print_upwards(|| {
-            bunt::println!("{$green}[+] OK{/$} {$yellow}Got initial UI state from daemon:{/$} {:?}", ui_state);
+            bunt::println!(
+                "{$green}[+] OK{/$} {$yellow}Got initial UI state from daemon:{/$} {:?}",
+                ui_state
+            );
             Ok(())
         })?;
 
@@ -151,26 +102,32 @@ impl<'a> State<'a> {
                                     ControlFlow::Continue(()) => (),
                                     ControlFlow::Break(()) => break 'evt_loop,
                                 },
-                                Err(poo) => panic!("poo occurred: {poo}"),
+                                Err(term_e) => panic!("terminal error: {}", term_e),
                             }
                         }
-                        None => panic!("I can't program")
+                        None => eprintln!("Blank terminal event")
                     }
                 }
                 opt = drx.recv() => match opt {
                     Some(msg) => match msg.event {
                         Some(evt) => match evt {
                             Message(mevt) => {
-                                bunt::print!("{$green}[+] OK {/$}{$yellow}Message event:{/$} {:?}\n\raw", mevt);
-                                //print!("[+ok] MESSAGE event: {:?}", mevt);
+                                self.print_upwards(|| {
+                                    bunt::print!("{$green}[+] OK {/$}{$yellow}Message event:{/$} {:?}\n\r", mevt);
+                                    Ok(())
+                                })?;
                             },
                             MessageDelete(mdevt) => {
-                                bunt::print!("{$green}[+] OK {/$}{$yellow}Message delete event:{/$} {:?}\n\r", mdevt);
-                                //println!("DELETED event: {:?}", mdevt);
+                                self.print_upwards(|| {
+                                    bunt::print!("{$green}[+] OK {/$}{$yellow}Message delete event:{/$} {:?}\n\r", mdevt);
+                                    Ok(())
+                                })?;
                             },
                             ChatRequest(crevt) => {
-                                bunt::print!("{$green}[+] OK {/$}{$yellow}Scammer Likely:{/$} {:?}\n\r", crevt);
-                                //println!("Scammer Likely: {:?}", crevt);
+                                self.print_upwards(|| {
+                                    bunt::print!("{$green}[+] OK {/$}{$yellow}Chat request event:{/$} {:?}\n\r", crevt);
+                                    Ok(())
+                                })?;
                             }
                         }
                         None => self.print_upwards(|| {
@@ -184,20 +141,6 @@ impl<'a> State<'a> {
                     })?
                 }
             }
-            /*// block until the next poll event happens
-            poll.poll(&mut events, None)
-                .context("failed to poll mio poll")?;
-
-            for event in &events {
-                match event.token() {
-                    Token(0) => self.handle_fifo_msg()?,
-                    Token(1) => match self.handle_term_evt()? {
-                        ControlFlow::Continue(()) => (),
-                        ControlFlow::Break(()) => break 'evt_loop,
-                    },
-                    _ => unreachable!(),
-                }
-            }*/
 
             // XXX: hopefully this code change fixes this issue anyways
             /*// temporary fix for initial buffering problem
@@ -225,29 +168,7 @@ impl<'a> State<'a> {
         Ok(())
     }
 
-    /*fn send_fifo_msg(&mut self, msg: &ClientToDaemonMsg) -> Result<()> {
-        rmp_serde::encode::write(&mut self.ctodbuf, &msg)
-            .with_context(|| format!("couldn't write message {msg:?} to fifo"))
-    }
-
-    fn handle_fifo_msg(&mut self) -> Result<()> {
-        let mut data = Vec::new();
-        self.dtocbuf
-            .read_to_end(&mut data)
-            .context("couldn't read from fifo")?;
-        match rmp_serde::from_slice::<DaemonToClientMsg>(&data) {
-            Ok(msg) => print!("got fifo msg: {msg:?}\n\r"),
-            Err(e) => self.print_upwards(|| {
-                bunt::print!("{$red}invalid message from daemon: {}{/$}\n\r", e);
-                Ok(())
-            })?,
-        }
-
-        Ok(())
-    }*/
-
     async fn handle_term_evt(&mut self, event: Event) -> Result<ControlFlow<()>> {
-        //let event = event::read().context("couldn't read next terminal event")?;
         match event {
             Event::Key(kev) => self.handle_kev(kev).await,
             _ => Ok(ControlFlow::Continue(())),
@@ -271,11 +192,12 @@ impl<'a> State<'a> {
                     return Ok(ControlFlow::Continue(()));
                 }
 
-                self.daemon.send_message(SendMessageRequest {
-                    recipient: 0,
-                    content: self.input.clone(),
-                }).await?;
-                //self.send_fifo_msg(&ClientToDaemonMsg::Send(self.input.clone()))?;
+                self.daemon
+                    .send_message(SendMessageRequest {
+                        recipient: 0,
+                        content: self.input.clone(),
+                    })
+                    .await?;
                 self.input.clear();
                 self.stdout
                     .queue(terminal::Clear(ClearType::CurrentLine))?

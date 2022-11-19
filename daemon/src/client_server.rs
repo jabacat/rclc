@@ -49,8 +49,6 @@ impl ClientDaemon for ClientDaemonService {
         request: Request<()>,
     ) -> Result<Response<Self::SubscribeToEventsStream>, Status> {
         println!("Received subscribe to events request: {:?}", request);
-        // FIXME: Implement this
-        //let (_tx, rx) = tokio::sync::mpsc::channel(4);
 
         // TODO: send events as they come
         // FIXME: Someone needs to review this code, I just turned on Copilot and let it write this, including this comment
