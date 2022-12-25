@@ -1,6 +1,6 @@
 <div align="center">
 
-  # Rust Command Line Chat (RCLC) ![Rust](https://img.shields.io/github/workflow/status/jabacat/rclc/rust.yml?style=for-the-badge)
+  # Rust Command Line Chat (RCLC) ![Rust](https://img.shields.io/github/actions/workflow/status/jabacat/rclc/rust.yml?branch=main&style=for-the-badge)
   <img src="https://user-images.githubusercontent.com/35516367/184011766-a3719966-b53f-4245-895e-8a89fa177651.png" width="478" height="320" />
 </div>
 
