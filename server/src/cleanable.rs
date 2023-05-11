@@ -16,7 +16,7 @@ impl Cleanable for DiscoveryQueue {
         match self.queue.try_read().map_err(|e| CleanError::LockError) {
             Ok(it) => {
                 for ele in it.values() {
-                    SystemTime::now().checked_add(Duration::from_millis(ele.expires_in));
+                    SystemTime::now().checked_add(ele.expires_in);
                 }
             }
             Err(err) => return Err(err),

@@ -4,7 +4,7 @@ use log::debug;
 use rocket::serde::json::Json;
 use rocket::State;
 use std::net::SocketAddr;
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 
 #[get("/")]
 fn home() -> String {
@@ -37,7 +37,7 @@ fn discover(
     let advert = Advertisement {
         discovery: discoveryrequest.clone().into_inner(),
         created_at: SystemTime::now(),
-        expires_in: 5000,
+        expires_in: Duration::from_millis(5000),
     };
     debug!("{:?}", &advert);
     discoveryqueue
