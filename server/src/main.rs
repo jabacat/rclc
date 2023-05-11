@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate rocket;
 
+pub mod cleanable;
 pub mod discovery;
 pub mod routes;
 
