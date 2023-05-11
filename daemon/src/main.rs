@@ -1,9 +1,9 @@
 use reqwest;
 
+use common::notif::notif;
 use common::structures::{DiscoveryRequest, DiscoveryResponse, InfoResponse};
 use discovery::{discover, discover_info, discover_root, DiscoveryServerConfig};
 use std::net::{IpAddr, Ipv4Addr};
-use common::notif::notif;
 
 pub mod contact;
 pub mod discovery;
