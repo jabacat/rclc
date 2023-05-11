@@ -8,11 +8,13 @@ pub enum CleanError {
 
 pub trait Cleanable {
     // Returns the amount of instances that have been cleaned from the queue
-    fn clean(&self) -> Result<u16, CleanError>;
+    fn clean(&self) -> Result<usize, CleanError>;
 }
 
 impl Cleanable for DiscoveryQueue {
-    fn clean(&self) -> Result<u16, CleanError> {
+    /// Cleans each advertisement based on it's age and expiration date
+    /// Returns the number of advertisements removed
+    fn clean(&self) -> Result<usize, CleanError> {
         let mut to_remove: Vec<String> = vec![];
         match self.queue.try_read().map_err(|_| CleanError::LockError) {
             Ok(it) => {
@@ -38,16 +40,6 @@ impl Cleanable for DiscoveryQueue {
                 .map_err(|_| CleanError::LockError)?
                 .remove(ele);
         }
-        Ok(to_remove
-            .len()
-            .try_into()
-            .expect("Length of removed items was not expected to be so long")) // This can only
-                                                                               // fail if the
-                                                                               // unsigned value of
-                                                                               // the number of
-                                                                               // advertisements
-                                                                               // removed exceeds
-                                                                               // the 16 bit
-                                                                               // integer limit
+        Ok(to_remove.len())
     }
 }
