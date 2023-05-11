@@ -2,6 +2,7 @@ use std::time::SystemTime;
 
 use crate::discovery::DiscoveryQueue;
 
+#[derive(Debug)]
 pub enum CleanError {
     LockError,
 }
@@ -57,6 +58,8 @@ mod test {
 
     use crate::discovery::{Advertisement, DiscoveryQueue};
 
+    use super::Cleanable;
+
     #[test]
     fn clean_test() {
         let discoveryqueue = DiscoveryQueue {
@@ -73,6 +76,14 @@ mod test {
             public_key: "qwertyuiop".to_string(),
         };
 
+        let disc_req_b = DiscoveryRequest {
+            ip: Some(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1))),
+            port: 2121,
+            requested_by: "B".to_string(),
+            looking_for: "A".to_string(),
+            public_key: "qwertyuiop".to_string(),
+        };
+
         locked_queue.insert(
             "A".to_string(),
             Advertisement {
@@ -81,5 +92,29 @@ mod test {
                 expires_in: Duration::from_millis(100),
             },
         );
+
+        locked_queue.insert(
+            "B".to_string(),
+            Advertisement {
+                discovery: disc_req_b,
+                created_at: SystemTime::now()
+                    .checked_sub(Duration::from_millis(5000))
+                    .unwrap(),
+                expires_in: Duration::from_millis(100),
+            },
+        );
+
+        drop(locked_queue); // Free up lock
+        assert_eq!(discoveryqueue.clean().unwrap(), 1);
+        discoveryqueue
+            .queue
+            .read()
+            .unwrap()
+            .get("A")
+            .expect("Person A does not exist in map");
+
+        if discoveryqueue.queue.read().unwrap().get("B").is_some() {
+            panic!("Person B should not exist in map")
+        };
     }
 }
