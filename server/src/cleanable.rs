@@ -61,6 +61,10 @@ mod test {
     use super::Cleanable;
 
     #[test]
+    /// This test simulates a scenario where the discovery queue contains two different
+    /// advertisements. One advertisement has been created such that it should expire, the other,
+    /// has been created so that it should not expire. The test checks to make sure that the
+    /// correct advertisements get cleaned from the queue
     fn clean_test() {
         let discoveryqueue = DiscoveryQueue {
             queue: RwLock::new(HashMap::new()),
@@ -68,6 +72,7 @@ mod test {
 
         let mut locked_queue = discoveryqueue.queue.write().unwrap();
 
+        // Creates a false discovery request for person A
         let disc_req_a = DiscoveryRequest {
             ip: Some(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1))),
             port: 2121,
@@ -76,6 +81,7 @@ mod test {
             public_key: "qwertyuiop".to_string(),
         };
 
+        // Creates a false discovery request for person B
         let disc_req_b = DiscoveryRequest {
             ip: Some(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1))),
             port: 2121,
@@ -84,6 +90,7 @@ mod test {
             public_key: "qwertyuiop".to_string(),
         };
 
+        // Inserts person A into the queue
         locked_queue.insert(
             "A".to_string(),
             Advertisement {
@@ -93,6 +100,7 @@ mod test {
             },
         );
 
+        // Inserts person B into the queue
         locked_queue.insert(
             "B".to_string(),
             Advertisement {
@@ -105,7 +113,11 @@ mod test {
         );
 
         drop(locked_queue); // Free up lock
+
+        // Checks that 1 person was removed during the clean up
         assert_eq!(discoveryqueue.clean().unwrap(), 1);
+
+        // Makes sure person A still exists in the map
         discoveryqueue
             .queue
             .read()
@@ -113,6 +125,7 @@ mod test {
             .get("A")
             .expect("Person A does not exist in map");
 
+        // Makes sure person B does not exist in the map
         if discoveryqueue.queue.read().unwrap().get("B").is_some() {
             panic!("Person B should not exist in map")
         };
