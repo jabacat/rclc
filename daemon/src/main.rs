@@ -1,19 +1,19 @@
 use reqwest;
 
+use common::notif::notif;
 use common::structures::{DiscoveryRequest, DiscoveryResponse, InfoResponse};
 use discovery::{discover, discover_info, discover_root, DiscoveryServerConfig};
 use std::net::{IpAddr, Ipv4Addr};
 
 pub mod contact;
 pub mod discovery;
-pub mod notif;
 
 #[tokio::main]
 async fn main() {
     env_logger::init();
     println!("Hello, world!");
 
-    notif::notif("RCLC", "The RCLC daemon has been launched!");
+    notif("RCLC", "The RCLC daemon has been launched!");
 
     let disc_conf = DiscoveryServerConfig {
         url: "http://127.0.0.1:8000".to_string(),
