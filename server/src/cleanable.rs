@@ -33,11 +33,21 @@ impl Cleanable for DiscoveryQueue {
         };
 
         for ele in &to_remove {
-            self.queue.write().expect("").remove(ele);
+            self.queue
+                .try_write()
+                .map_err(|_| CleanError::LockError)?
+                .remove(ele);
         }
         Ok(to_remove
             .len()
             .try_into()
-            .expect("Length of removed items was not expected to be so long"))
+            .expect("Length of removed items was not expected to be so long")) // This can only
+                                                                               // fail if the
+                                                                               // unsigned value of
+                                                                               // the number of
+                                                                               // advertisements
+                                                                               // removed exceeds
+                                                                               // the 16 bit
+                                                                               // integer limit
     }
 }
