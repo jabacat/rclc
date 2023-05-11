@@ -7,13 +7,12 @@ pub enum CleanError {
 }
 
 pub trait Cleanable {
-    // Returns the amount of instances that have been cleaned from the queue
+    /// Cleans each advertisement based on it's age and expiration date
+    /// Returns the number of advertisements removed
     fn clean(&self) -> Result<usize, CleanError>;
 }
 
 impl Cleanable for DiscoveryQueue {
-    /// Cleans each advertisement based on it's age and expiration date
-    /// Returns the number of advertisements removed
     fn clean(&self) -> Result<usize, CleanError> {
         let mut to_remove: Vec<String> = vec![];
         match self.queue.try_read().map_err(|_| CleanError::LockError) {
