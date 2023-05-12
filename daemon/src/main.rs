@@ -4,6 +4,7 @@ use common::notif::notif;
 use common::structures::{DiscoveryRequest, DiscoveryResponse, InfoResponse};
 use discovery::{discover, discover_info, discover_root, DiscoveryServerConfig};
 use std::net::{IpAddr, Ipv4Addr};
+use std::time::Duration;
 
 pub mod contact;
 pub mod discovery;
@@ -68,5 +69,12 @@ async fn main() {
             println!("{:?}", a);
         }
         Err(_) => eprintln!("Could not connect to server. Possible it does not exist yet."),
+    }
+
+    // Try and listen from packets from the client
+    listen::listen("/tmp/rclc.sock");
+
+    loop {
+        std::thread::sleep(Duration::from_millis(500));
     }
 }
