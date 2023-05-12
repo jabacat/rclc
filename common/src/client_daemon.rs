@@ -1,5 +1,5 @@
 use chrono::{offset::Utc, DateTime};
-use rocket::serde::json::serde_json;
+use postcard::Error;
 use serde::{Deserialize, Serialize};
 
 use std::{
@@ -24,8 +24,8 @@ impl From<ParseIntError> for PacketParseError {
     }
 }
 
-impl From<ParseBoolError> for PacketParseError {
-    fn from(_err: ParseBoolError) -> Self {
+impl From<Error> for PacketParseError {
+    fn from(_err: postcard::Error) -> Self {
         PacketParseError
     }
 }
@@ -53,6 +53,9 @@ pub enum DaemonToClientMsg {
     Unknown,
 }
 
-pub fn parse_client_to_daemon_message(packet: &str) -> Result<ClientToDaemonMsg, PacketParseError> {
-    serde_json::from_str(packet).map_err(|_| PacketParseError)
+pub fn parse_client_to_daemon_message(
+    data: Vec<u8>,
+) -> Result<ClientToDaemonMsg, PacketParseError> {
+    let out: ClientToDaemonMsg = postcard::from_bytes(&data).map_err(|_| PacketParseError)?;
+    Ok(out)
 }

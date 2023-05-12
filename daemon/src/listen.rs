@@ -68,7 +68,7 @@ pub fn handle_stream(stream: UnixStream) {
                     }
                 },
             };
-            let message = match parse_client_to_daemon_message(&actual_line) {
+            let message = match parse_client_to_daemon_message(actual_line.into_bytes()) {
                 Ok(p) => p,
                 Err(e) => {
                     notif("Stream Error", &format!("Received malformed packet: {}", e));

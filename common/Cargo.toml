@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 notify-rust = "4.6.0"
+postcard="1.0.0"
 
 [dependencies.rocket]
 version = "0.5.0-rc.2"
