@@ -59,3 +59,10 @@ pub fn parse_client_to_daemon_message(
     let out: ClientToDaemonMsg = postcard::from_bytes(&data).map_err(|_| PacketParseError)?;
     Ok(out)
 }
+
+pub fn serialize_client_to_daemon_message(
+    message: ClientToDaemonMsg,
+) -> Result<Vec<u8>, PacketParseError> {
+    let out: heapless::Vec<u8, 32> = postcard::to_vec(&message).map_err(|_| PacketParseError)?;
+    Ok(out.to_vec())
+}
