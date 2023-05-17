@@ -9,14 +9,13 @@ pub fn interactive() {
 
     println!("{}", bold!("Rust Command Line Chat (RCLC)"));
     println!("{}", color!(Color::BLUE, "Interactive Mode"));
+    hook::hook("/tmp/rclc.sock");
 
     loop {
         print!("{}", color!(Color::GREEN, "\n> "));
         stdout().flush().expect("Failed to flush stdout");
 
         input = String::new();
-
-        hook::hook("/tmp/rclc.sock");
 
         match stdin().read_line(&mut input) {
             Ok(_) => {
