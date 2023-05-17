@@ -2,6 +2,8 @@ use common::notif::notif;
 use efcl::{bold, color, Color};
 use std::io::{stdin, stdout, Write};
 
+pub mod hook;
+
 pub fn interactive() {
     let mut input;
 
@@ -13,6 +15,8 @@ pub fn interactive() {
         stdout().flush().expect("Failed to flush stdout");
 
         input = String::new();
+
+        hook::hook("/tmp/rclc.sock");
 
         match stdin().read_line(&mut input) {
             Ok(_) => {
