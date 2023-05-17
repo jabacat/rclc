@@ -9,7 +9,8 @@ use std::{
 
 use common::{
     client_daemon::{
-        parse_message, serialize_message_daemon_to_client, ClientToDaemonMsg, DaemonToClientMsg,
+        parse_message_client_to_daemon, serialize_message_daemon_to_client, ClientToDaemonMsg,
+        DaemonToClientMsg,
     },
     notif::notif,
 };
@@ -70,7 +71,7 @@ pub fn handle_stream(stream: UnixStream) {
                     }
                 },
             };
-            let message = match parse_message(actual_line.into_bytes()) {
+            let message = match parse_message_client_to_daemon(actual_line.into_bytes()) {
                 Ok(p) => p,
                 Err(e) => {
                     notif("Stream Error", &format!("Received malformed packet: {}", e));
@@ -80,6 +81,7 @@ pub fn handle_stream(stream: UnixStream) {
 
             println!("Message: {:?}", message);
 
+            // TODO: This would be an excellent use for a macro
             let to_send = match serialize_message_daemon_to_client(DaemonToClientMsg::Test(
                 "The quick brown fox jumped over the lazy dogs".to_string(),
             )) {
