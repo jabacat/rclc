@@ -1,5 +1,5 @@
 use std::{
-    io::{BufRead, BufReader},
+    io::{BufRead, BufReader, BufWriter, Write},
     os::unix::{
         net::{UnixListener, UnixStream},
         prelude::PermissionsExt,
@@ -8,7 +8,9 @@ use std::{
 };
 
 use common::{
-    client_daemon::{parse_client_to_daemon_message, ClientToDaemonMsg},
+    client_daemon::{
+        parse_message, serialize_message_daemon_to_client, ClientToDaemonMsg, DaemonToClientMsg,
+    },
     notif::notif,
 };
 
@@ -68,7 +70,7 @@ pub fn handle_stream(stream: UnixStream) {
                     }
                 },
             };
-            let message = match parse_client_to_daemon_message(actual_line.into_bytes()) {
+            let message = match parse_message(actual_line.into_bytes()) {
                 Ok(p) => p,
                 Err(e) => {
                     notif("Stream Error", &format!("Received malformed packet: {}", e));
@@ -77,6 +79,24 @@ pub fn handle_stream(stream: UnixStream) {
             };
 
             println!("Message: {:?}", message);
+
+            let to_send = match serialize_message_daemon_to_client(DaemonToClientMsg::Test(
+                "The quick brown fox jumped over the lazy dogs".to_string(),
+            )) {
+                Ok(b) => b,
+                Err(e) => {
+                    notif(
+                        "Stream Error",
+                        &format!("Could not serialize packet: {:?}", e),
+                    );
+                    return;
+                }
+            };
+            println!("Returning: {:?}", to_send);
+
+            let mut writer = BufWriter::new(&stream);
+            writer.write_all(&to_send).unwrap();
+            writer.flush().unwrap();
         }
     });
 }

@@ -42,6 +42,7 @@ pub struct Message {
 pub enum ClientToDaemonMsg {
     Block(IpAddr),
     Send(String),
+    Test(String),
     Connect,
     Disconnect,
     Unknown,
@@ -50,19 +51,27 @@ pub enum ClientToDaemonMsg {
 #[derive(Deserialize, Serialize, Debug)]
 pub enum DaemonToClientMsg {
     Recieved(Message),
+    Test(String),
     Unknown,
 }
 
-pub fn parse_client_to_daemon_message(
-    data: Vec<u8>,
-) -> Result<ClientToDaemonMsg, PacketParseError> {
+pub fn parse_message(data: Vec<u8>) -> Result<ClientToDaemonMsg, PacketParseError> {
     let out: ClientToDaemonMsg = postcard::from_bytes(&data).map_err(|_| PacketParseError)?;
     Ok(out)
 }
 
-pub fn serialize_client_to_daemon_message(
+pub fn serialize_message_daemon_to_client(
+    message: DaemonToClientMsg,
+) -> Result<Vec<u8>, postcard::Error> {
+    //let out: heapless::Vec<u8, 128> = postcard::to_vec(&message)?;
+    let out: Vec<u8> = postcard::to_vec::<DaemonToClientMsg, 16384>(&message)?.to_vec();
+    Ok(out.to_vec())
+}
+
+pub fn serialize_message_client_to_daemon(
     message: ClientToDaemonMsg,
-) -> Result<Vec<u8>, PacketParseError> {
-    let out: heapless::Vec<u8, 32> = postcard::to_vec(&message).map_err(|_| PacketParseError)?;
+) -> Result<Vec<u8>, postcard::Error> {
+    //let out: heapless::Vec<u8, 128> = postcard::to_vec(&message)?;
+    let out: Vec<u8> = postcard::to_vec::<ClientToDaemonMsg, 16384>(&message)?.to_vec();
     Ok(out.to_vec())
 }
