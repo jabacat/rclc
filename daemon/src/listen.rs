@@ -1,5 +1,5 @@
 use std::{
-    io::{BufRead, BufReader, BufWriter, Write},
+    io::{self, BufRead, BufReader, BufWriter, Write},
     os::unix::{
         net::{UnixListener, UnixStream},
         prelude::PermissionsExt,
@@ -40,7 +40,16 @@ pub fn listen(path: &'static str) {
             for stream in listener.incoming() {
                 match stream {
                     Ok(stream) => {
-                        handle_stream(stream);
+                        match handle_stream(stream) {
+                            Ok(_) => {}
+                            Err(err) => {
+                                notif(
+                                    "Daemon Error",
+                                    &format!("Failed to accept connection: {}", err),
+                                );
+                                break;
+                            }
+                        };
                     }
                     Err(err) => {
                         notif(
@@ -55,19 +64,19 @@ pub fn listen(path: &'static str) {
     });
 }
 
-pub fn handle_stream(stream: UnixStream) {
-    thread::spawn(move || {
+pub fn handle_stream(stream: UnixStream) -> io::Result<()> {
+    thread::spawn(move || -> io::Result<()> {
         let reader = BufReader::new(&stream);
         for line in reader.lines() {
             let actual_line = match line {
                 Ok(line) => line,
                 Err(e) => match e.kind() {
                     std::io::ErrorKind::BrokenPipe => {
-                        return;
+                        return Err(e);
                     }
                     _ => {
                         notif("Stream Error", &format!("Failed to read line: {}", e));
-                        return;
+                        return Err(e);
                     }
                 },
             };
@@ -91,14 +100,19 @@ pub fn handle_stream(stream: UnixStream) {
                         "Stream Error",
                         &format!("Could not serialize packet: {:?}", e),
                     );
-                    return;
+                    return Err(io::Error::new(
+                        io::ErrorKind::Other,
+                        "Failed to parse message",
+                    ));
                 }
             };
             println!("Returning: {:?}", to_send);
 
             let mut writer = BufWriter::new(&stream);
-            writer.write_all(&to_send).unwrap();
-            writer.flush().unwrap();
+            writer.write_all(&to_send)?;
+            writer.flush()?;
         }
+        Ok(())
     });
+    Ok(())
 }
