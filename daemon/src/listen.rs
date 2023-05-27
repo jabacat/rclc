@@ -32,9 +32,6 @@ pub fn listen(path: &'static str) {
             }
         };
 
-        // Set the permissions on the sock
-        std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o777)).ok();
-
         // Spawn a new thread to listen for commands
         thread::spawn(move || {
             for stream in listener.incoming() {
