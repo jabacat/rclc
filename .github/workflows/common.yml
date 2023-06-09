@@ -1,0 +1,44 @@
+name: Build and test common
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "common/"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - "common/"
+
+env:
+  CARGO_TERM_COLOR: always
+  DEBIAN_FRONTEND: noninteractive
+
+defaults:
+  run:
+    working_directory: common
+
+jobs:
+  build-common:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: dtolnay/rust-toolchain@stable
+      with:
+        components: clippy, rustfmt
+
+    - uses: Swatinem/rust-cache@v2
+
+    - name: Build
+      run: |
+        cargo build --verbose
+        
+    - name: Test
+      run: |
+        cargo test --verbose
+        
+    - name: Format
+      run: |
+        cargo fmt --check
